@@ -31,7 +31,7 @@ ft_sampleinfo_var =ft_sampleinfo_var';
 
   event_pos = (event_pos./Fs);
     %make the event txt file
-cd('C:\Users\jay\Desktop\Work\TMS-EEG\Programs');
+cd('C:\Users\jay\Desktop\Work\TMS-EEG');
 fid = fopen('event.txt', 'wt');
 fprintf(fid, 'latency type\n');
 for i = 1:length(event_pos)
