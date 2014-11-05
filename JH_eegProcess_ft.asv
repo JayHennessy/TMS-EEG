@@ -53,8 +53,8 @@ switch result
 end
 
 prefix_vec = strfind(file_name, '\');
-prefix = file_name(1:prefix_vec(end-1));
-suffix = file_name(prefix_vec(end+1):end);
+prefix = file_name(1:prefix_vec(end)-1);
+suffix = file_name(prefix_vec(end)+1:end);
 
 
 addpath('C:\Users\jay\Desktop\Work\TMS-EEG\');
@@ -164,7 +164,7 @@ cfg.preproc.demean = 'yes';
 cfg.preproc.baselinewindow = [-0.9 -0.01];
 ft_databrowser(cfg, data);
  
-prompt = 'Please enter an array containing the indices of the epochs that you would like to discard \n \n';
+prompt = ' /n /n Please enter an array containing the indices of the epochs that you would like to discard \n \n';
 rejectArray = input(prompt);
 %% Remove bad epochs
 
@@ -192,22 +192,33 @@ trl = data.cfg.trl;
 
 %type is 1 if single pulse or 2 if paired pulse
 
-prompt = '
+prompt = ['At what cut-off time would you like your TMS ringing cut? \n '...
+            ' (note: time is in seconds and 0 means compute automatically) \n \n'];
+
+poststim = input(prompt);
 
 if type ==1
     cfg = [];
     cfg.trl = trl;
     cfg.continuous = 'no';
     cfg.method = 'marker';
-     if data_set == 1 || data_set ==0
+  
+    if poststim ~= 0
+        [cutoff cutinterval time] = ft_getCutoff(data, cfg, type)% 1 if single pulse, 2 if double pulse
+        cfg.poststim = cutoff;
+    else
+        
+        cfg.poststim = poststim;
+        cutoff = poststim;
+    end
+    
+    if data_set == 1 || data_set ==0
         cfg.prestim = 0;
     elseif data_set == 2
         cfg.prestim = -0.007;
+        poststim = poststim+0.007;
     end
-  
-    [cutoff cutinterval time] = ft_getCutoff(data, cfg, type)  % 1 if single pulse, 2 if double pulse
-    %cutoff = 0.017;
-    cfg.poststim = 0.023;
+    
     cfg.Fs = 5000;
     triggers = {'S  1', 'S  2'};
     cfg.trialdef.eventtype      = 'Stimulus'; % see above
@@ -232,11 +243,25 @@ if type ==2
     cfg.trl = trl;
     cfg.continuous = 'no';
     cfg.method = 'marker';
+    if poststim ~= 0
+        [cutoff cutinterval time] = ft_getCutoff(data, cfg, type)  % 1 if single pulse, 2 if double pulse
+        
+        cfg.poststim = cutoff;
+    else
+        
+        cfg.poststim = poststim+0.1;
+        cutoff = poststim+0.1;
+    end
     
-    cfg.prestim = -0.098;
+    if data_set == 1 || data_set ==0
+        cfg.prestim = -0.098;
+    elseif data_set == 2
+        cfg.prestim = -0.007;
+        poststim = poststim+0.007;
+    end
+    
+    
     prestim = cfg.prestim;
-    [cutoff cutinterval time] = ft_getCutoff(data, cfg, type)  % 1 if single pulse, 2 if double pulse
-    cfg.poststim = 0.123;
     cfg.Fs = 5000;
     cfg.trialdef.eventtype  = 'p-pulse';
     cfg.trialdef.eventvalue = 1000;
@@ -278,6 +303,7 @@ cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent
 ft_databrowser(cfg, data);
 
 prompt = 'Is the cut-off at an acceptable latency? \n \n ';
+result = input(prompt);
 
 
 
@@ -317,8 +343,13 @@ figure;
 cfg = [];
 cfg.viewmode = 'vertical';
 ft_databrowser(cfg, comp_tms);
+
+prompt = 'Would you like to see the frequency analysis?';
+result = input(prompt);
+
 %% frequency analysis
 
+if strcmp(result, 'yes')
 cfg = [];
 cfg.polyremoval     = 1; % Removes mean and linear trend
 cfg.output          = 'pow'; % Output the powerspectrum
@@ -330,7 +361,7 @@ cfg.toi             = -0.5:0.05:1.5;
 
 freq         = ft_freqanalysis(cfg, comp_tms);
 
-%%
+
 tmpLabels = freq.label;
  for i = 1:size(comp_tms.label,1)
     freq.label{i} = data.label{i}; 
@@ -345,6 +376,7 @@ cfg.showlabels = 'yes';
 figure;
 ft_multiplotTFR(cfg, freq);
 
+end
         %% Use unmixing matrix to get original data back to remove components
 
 cfg          = [];
