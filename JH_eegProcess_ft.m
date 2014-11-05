@@ -17,7 +17,7 @@
 % 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014','Jay_single_35_ref_and_ground_nose.vhdr'
 % 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014','Jay_48_singleandLICI_LeftM1.vhdr'
 
-addpath('C:\Users\jay\Desktop\Work\TMS-EEG\Programs');
+addpath('C:\Users\jay\Desktop\Work\TMS-EEG\');
 addpath('C:\Program Files\MATLAB\R2011a\toolbox\eeglab13_3_2b');
 eeglab
 
@@ -39,7 +39,7 @@ EEG = eeg_checkset( EEG );
 
 %% make events if they arent already in the data
 makeEvent(EEG,5000);
-EEG = pop_importevent( EEG, 'append','no','event','C:\\Users\\jay\\Desktop\\Work\\TMS-EEG\\Programs\\event.txt','fields',{'latency' 'type'},'skipline',1,'timeunit',1);
+EEG = pop_importevent( EEG, 'append','no','event','C:\\Users\\jay\\Desktop\\Work\\TMS-EEG\\event.txt','fields',{'latency' 'type'},'skipline',1,'timeunit',1);
 EEG = eeg_checkset( EEG );
 
 %% Epoch the data
@@ -147,7 +147,7 @@ JH_single35 = [1 8 24 38 42 44 58 101 102];
 JH_single_47 = [1 2 102 103 107 111 112 113];
 old_single = [1 2 12 14 15 16 22 24 30 31  32 36 40 44 45 51 53 54 64 67 71 72 73];
 old_LICI = [1  32 33 46 56 64 68 76 78 87 89 90 91 92 93 94];
-rejectArray = old_single;
+rejectArray = old_LICI;
 cfg.artfctdef.xxx.artifact = ft_xxxReject(rejectArray , data.fsample);
 numEpochsRmv = length(rejectArray);
 data = ft_rejectartifact(cfg, data);
@@ -159,7 +159,7 @@ trl = data.cfg.trl;
 %% set rejection markers
 
 %type is 1 if single pulse or 2 if paired pulse
-type = 1;
+type = 2;
 
 
 if type ==1
@@ -331,7 +331,7 @@ comp_tms         = ft_componentanalysis(cfg, data);  % MAKE SURE THIS IS SUPPOSE
 %% Reject components
 
 cfg            = [];
- removeArray    = [7 3 22 24 6 19]; 
+ removeArray    = [25 1 2 7]; 
 cfg.component  = removeArray;   
 cfg.demean     = 'no';
 numCompRmv     = size(removeArray,2);
@@ -418,7 +418,7 @@ data_filt = ft_preprocessing(cfg, data_tms_clean);
 
 cfg = [];
 cfg.artfctdef.reject = 'complete';
-rejectArray = [14 45];
+rejectArray = [70 73];
 cfg.artfctdef.xxx.artifact = ft_xxxReject(rejectArray, data.fsample);
 
 numEpochsRmv2 = size(rejectArray,2);
