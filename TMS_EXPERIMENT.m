@@ -1,8 +1,9 @@
-function [ output_args ] = TMS_EXPERIMENT( power, icf, lici, single, status )
+function [ TRIALS_REM] = TMS_EXPERIMENT( power, icf, lici, single, status )
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 % This script will run the TMS EEG experiment for Dr. Near's Lab
 
+display('*** IT''S ALIVE, IT''s ALIVE***')
 
 % User Variables
 POWER_100         = power;

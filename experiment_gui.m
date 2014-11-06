@@ -22,8 +22,15 @@ function varargout = experiment_gui(varargin)
 
 % Edit the above text to modify the response to help experiment_gui
 
-% Last Modified by GUIDE v2.5 06-Nov-2014 12:43:02
+% Last Modified by GUIDE v2.5 06-Nov-2014 16:05:38
 
+ global power ; 
+ global lici;
+ global icf;
+ global single;
+ global status;
+ global TRIALS_REM
+ 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
@@ -42,6 +49,8 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
+
+
 
 
 % --- Executes just before experiment_gui is made visible.
@@ -79,6 +88,15 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+ global power ; 
+ global lici;
+ global icf;
+ global single;
+ global status;
+ global TRIALS_REM
+%[TRIALS_REM] = TMS_EXPERIMENT(power, icf, lici, single,status);
+[TRIALS_REM] = test(power, icf, lici, single,status);
+display(TRIALS_REM)
 
 % --- Executes on button press in pushbutton2.
 function pushbutton2_Callback(hObject, eventdata, handles)
@@ -95,6 +113,10 @@ function edit1_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit1 as text
 %        str2double(get(hObject,'String')) returns contents of edit1 as a double
+str=get(hObject, 'string');
+global power;
+ power = str2double(str);
+ display(power)
 
 
 % --- Executes during object creation, after setting all properties.
@@ -118,7 +140,10 @@ function edit2_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit2 as text
 %        str2double(get(hObject,'String')) returns contents of edit2 as a double
-
+str=get(hObject, 'string');
+global single;
+ single = str2double(str);
+ display(single)
 
 % --- Executes during object creation, after setting all properties.
 function edit2_CreateFcn(hObject, eventdata, handles)
@@ -141,7 +166,10 @@ function edit3_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit3 as text
 %        str2double(get(hObject,'String')) returns contents of edit3 as a double
-
+str=get(hObject, 'string');
+global lici;
+ lici = str2double(str);
+ display(lici)
 
 % --- Executes during object creation, after setting all properties.
 function edit3_CreateFcn(hObject, eventdata, handles)
@@ -164,11 +192,40 @@ function edit4_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit4 as text
 %        str2double(get(hObject,'String')) returns contents of edit4 as a double
-
+str=get(hObject, 'string');
+global icf;
+ icf = str2double(str);
+ display(icf)
 
 % --- Executes during object creation, after setting all properties.
 function edit4_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to edit4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit5_Callback(hObject, eventdata, handles)
+% hObject    handle to edit5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit5 as text
+%        str2double(get(hObject,'String')) returns contents of edit5 as a double
+global TRIALS_REM
+while true
+set(hObject, 'String', TRIALS_REM);
+end
+
+% --- Executes during object creation, after setting all properties.
+function edit5_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit5 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
