@@ -40,15 +40,15 @@ switch result
     case 8
         file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Second Practice test 02-07-2014\ramp_leftM!_140.vhdr';
     case 9
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_35_singlepulse.vhdr'
+        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_35_singlepulse.vhdr';
     case 10
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_48_singleandLICI_LeftM1.vhdr'
+        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_48_singleandLICI_LeftM1.vhdr';
     case 11
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_47_LICI_leftM1.vhdr'
+        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_47_LICI_leftM1.vhdr';
     case 12
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_single35_refnose.vhdr'
+        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_single35_refnose.vhdr';
     case 13
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_single_35_ref_and_ground_nose.vhdr'
+        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_single_35_ref_and_ground_nose.vhdr';
         
 end
 
@@ -79,9 +79,11 @@ end
 EEG = eeg_checkset( EEG );
 
 %% make events if they arent already in the data
-makeEvent(EEG,5000);
-EEG = pop_importevent( EEG, 'append','no','event','C:\\Users\\jay\\Desktop\\Work\\TMS-EEG\\event.txt','fields',{'latency' 'type'},'skipline',1,'timeunit',1);
-EEG = eeg_checkset( EEG );
+if result < 9
+    makeEvent(EEG,5000);
+    EEG = pop_importevent( EEG, 'append','no','event','C:\\Users\\jay\\Desktop\\Work\\TMS-EEG\\event.txt','fields',{'latency' 'type'},'skipline',1,'timeunit',1);
+    EEG = eeg_checkset( EEG );
+end
 
 %% Epoch the data
 eventtype = EEG.event(2).type;
@@ -164,7 +166,7 @@ cfg.preproc.demean = 'yes';
 cfg.preproc.baselinewindow = [-0.9 -0.01];
 ft_databrowser(cfg, data);
  
-prompt = ' /n /n Please enter an array containing the indices of the epochs that you would like to discard \n \n';
+prompt = ' \n \n Please enter an array containing the indices of the epochs that you would like to discard \n \n';
 rejectArray = input(prompt);
 %% Remove bad epochs
 
@@ -202,8 +204,14 @@ if type ==1
     cfg.trl = trl;
     cfg.continuous = 'no';
     cfg.method = 'marker';
+    
+    if data_set == 1 || data_set ==0
+        cfg.prestim = 0;
+    elseif data_set == 2
+        cfg.prestim = -0.007;
+    end
   
-    if poststim ~= 0
+    if poststim == 0
         [cutoff cutinterval time] = ft_getCutoff(data, cfg, type)% 1 if single pulse, 2 if double pulse
         cfg.poststim = cutoff;
     else
@@ -212,13 +220,12 @@ if type ==1
         cutoff = poststim;
     end
     
-    if data_set == 1 || data_set ==0
-        cfg.prestim = 0;
-    elseif data_set == 2
-        cfg.prestim = -0.007;
-        poststim = poststim+0.007;
+    if data_set == 2
+        cfg.poststim = cutoff+0.007;
+        cutoff = cfg.poststim;
     end
     
+    prestim = cfg.prestim;
     cfg.Fs = 5000;
     triggers = {'S  1', 'S  2'};
     cfg.trialdef.eventtype      = 'Stimulus'; % see above
@@ -243,9 +250,15 @@ if type ==2
     cfg.trl = trl;
     cfg.continuous = 'no';
     cfg.method = 'marker';
-    if poststim ~= 0
-        [cutoff cutinterval time] = ft_getCutoff(data, cfg, type)  % 1 if single pulse, 2 if double pulse
-        
+    
+    if data_set == 1 || data_set ==0
+        cfg.prestim = -0.098;
+    elseif data_set == 2
+        cfg.prestim = -0.105;
+    end
+  
+    if poststim == 0
+        [cutoff cutinterval time] = ft_getCutoff(data, cfg, type)% 1 if single pulse, 2 if double pulse
         cfg.poststim = cutoff;
     else
         
@@ -253,13 +266,12 @@ if type ==2
         cutoff = poststim+0.1;
     end
     
-    if data_set == 1 || data_set ==0
-        cfg.prestim = -0.098;
-    elseif data_set == 2
-        cfg.prestim = -0.007;
-        poststim = poststim+0.007;
+     if data_set == 2
+        cfg.poststim = cutoff+0.007;
+        cutoff = cfg.poststim;
     end
     
+     
     
     prestim = cfg.prestim;
     cfg.Fs = 5000;
@@ -344,7 +356,7 @@ cfg = [];
 cfg.viewmode = 'vertical';
 ft_databrowser(cfg, comp_tms);
 
-prompt = '\n \n Would you like to see the frequency analysis?';
+prompt = '\n \n Would you like to see the frequency analysis? \n \n';
 result = input(prompt);
 
 %% frequency analysis
@@ -388,8 +400,11 @@ comp_tms         = ft_componentanalysis(cfg, data);  % MAKE SURE THIS IS SUPPOSE
 
 %% Reject components
 
+prompt = '\n \n Please enter a vector containing the indices of the components to reject  \n \n';
+removeArray = input(prompt);
+
 cfg            = [];
- removeArray    = [25 1 2 7]; 
+  
 cfg.component  = removeArray;   
 cfg.demean     = 'no';
 numCompRmv     = size(removeArray,2);
@@ -415,7 +430,7 @@ data_tms_clean = ft_redefinetrial(cfg, data_tms_clean_segmented); % Restructure 
 
 if type == 1 
 % Replacing muscle artifact with nans
-    muscle_window = [0 0.023]; % The window we would like to replace with nans
+    muscle_window = [prestim cutoff]; % The window we would like to replace with nans
     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))]; % Find the indices in the time vector corresponding to our window of interest
     for i=1:size(data_tms_clean.trial,2) % Loop through all trials
       data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
@@ -432,7 +447,7 @@ if type ==2
       data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
     end;
 % Replacing muscle artifact with nans
-    muscle_window = [0.098 0.123]; % The window we would like to replace with nans
+    muscle_window = [prestim cutoff]; % The window we would like to replace with nans
     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))]; % Find the indices in the time vector corresponding to our window of interest
     for i=1:size(data_tms_clean.trial,2) % Loop through all trials
       data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
@@ -471,12 +486,16 @@ data_filt = ft_preprocessing(cfg, data_tms_clean);
  
  ft_databrowser(cfg, data_filt);
  
+ 
+
 
 %% test for artifact rejection 
 
+prompt = '\n \n Please enter a vector containing the indices of the trials to reject \n \n';
+rejectArray = input(prompt);
+
 cfg = [];
 cfg.artfctdef.reject = 'complete';
-rejectArray = [70 73];
 cfg.artfctdef.xxx.artifact = ft_xxxReject(rejectArray, data.fsample);
 
 numEpochsRmv2 = size(rejectArray,2);
@@ -501,11 +520,7 @@ fieldtrip2eeglab
 chanNumEnd = size(EEG.data,1);
 
 logData( title, type, chanNumStart, chanNumEnd, numEpochs, numEpochsRmv, cutoff, numComp, numCompRmv, numEpochsRmv2)
-   %% Remove any nan trials
 
-EEG = remove_nan_trial(EEG);
+display(' \n \n Your data is now processed and in the variable ''EEG'' ');
 
-
-
-%% For 
 

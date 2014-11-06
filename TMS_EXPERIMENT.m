@@ -1,11 +1,14 @@
+function [ output_args ] = TMS_EXPERIMENT( power, icf, lici, single, status )
+%UNTITLED Summary of this function goes here
+%   Detailed explanation goes here
 % This script will run the TMS EEG experiment for Dr. Near's Lab
 
 
 % User Variables
-POWER_100         = 50;
-TRIALS_ICF        = 120;
-TRIALS_LICI       = 120;
-TRIALS_SINGLE     = 120;
+POWER_100         = power;
+TRIALS_ICF        = icf;
+TRIALS_LICI       = lici;
+TRIALS_SINGLE     = single;
 
 % Open Serial Communication
 s = serial('COM1');
@@ -21,7 +24,7 @@ i = 1;
 x = 1;
 TRIALS_TOTAL = TRIALS_ICF + TRIALS_LICI + TRIALS_SINGLE;
 
-While i <= TRIALS_TOTAL
+While i <= TRIALS_TOTAL && status
 
 % Set Enable
 fopen(s)
@@ -89,4 +92,8 @@ wend
 fclose(s)
 delete(s)
 clear s
+
+
+
+end
 
