@@ -1,10 +1,10 @@
-function [  ] = single_pulse( POWER )
+function [  ] = single_pulse( POWER ,s)
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
 
 POWER = POWER*1.2;
 
-s = serial('COM1');
+
 fopen(s)
 
 % set power

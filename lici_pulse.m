@@ -1,11 +1,11 @@
-function [  ] = lici_pulse( POWER )
+function [  ] = lici_pulse( POWER,s )
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
 
 M_POWER = POWER*1.2;
 S_POWER = POWER*1.2;
 
-s = serial('COM1');
+
 fopen(s)
 
 % set power

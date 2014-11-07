@@ -4,50 +4,51 @@ function [ i x handles ] = TMS_EXPERIMENT( s, handles, i ,x )
 % This script will run the TMS EEG experiment for Dr. Near's Lab
 
 
+TRIALS_REM = str2double(handles.lici)+str2double(handles.icf)+str2double(handles.single);
+handles.TRIALS_REM = num2str(TRIALS_REM);
+
 % Set Enable
 % fopen(s)
 % fprintf(s,'Q@n')
 
-% Pause
+% Pause 
 pause(1);
 
 %pause after 80 pulses to avoid over heating
 if mod(str2double(handles.TRIALS_REM),80)==0
     pause(90);
 end
-
+    
 % Send Pulse
 if x == 1
-    % single_pulse(str2double(handles.power),s);
-    display('SINGLE PULSE')
+   % single_pulse(str2double(handles.power),s);
+   display('SINGLE PULSE')
     single = str2double(handles.single) - 1;
     handles.single = num2str(single);
-    display(strcat('handles.single = ' , handles.single));
-    %     addline(dio,0:7,'out');
-    %     data = 13;
-    %     putvalue(dio.Line(1:4),data)
-    
-elseif x == 2
-    %  lici_pulse(str2double(handles.power),s);
-    display('LICI PULSE')
+%     addline(dio,0:7,'out');
+%     data = 13;
+%     putvalue(dio.Line(1:4),data)
+
+elseif x == 2 
+  %  lici_pulse(str2double(handles.power),s);
+  display('LICI PULSE')
     lici = str2double(handles.lici) - 1;
     handles.lici = num2str(lici);
-    display(strcat('handles.lici = ' , handles.lici));
-    %     addline(dio,0:7,'out');
-    %     data = 13;
-    %     putvalue(dio.Line(1:4),data)
-    
-elseif  x == 3
-    % icf_pulse(str2double(handles.power),s);
-    display('ICF PULSE')
+   
+%     addline(dio,0:7,'out');
+%     data = 13;
+%     putvalue(dio.Line(1:4),data)
+
+elseif  x == 3 
+   % icf_pulse(str2double(handles.power),s);
+   display('ICF PULSE')
     icf = str2double(handles.icf) - 1;
-    handles.icf = num2str(icf);
-    display(strcat('handles.icf = ' , handles.icf));
-    
-    %     addline(dio,0:7,'out');
-    %     data = 13;
-    %     putvalue(dio.Line(1:4),data)
-    
+    handles.icf = icf;
+ 
+%     addline(dio,0:7,'out');
+%     data = 13;
+%     putvalue(dio.Line(1:4),data)
+
 end
 
 % Chose next pulse
@@ -73,8 +74,7 @@ end
 
 i = i + 1;
 
-TRIALS_REM = str2double(handles.lici)+str2double(handles.icf)+str2double(handles.single);
-handles.TRIALS_REM = num2str(TRIALS_REM);
+
 
 end
 
