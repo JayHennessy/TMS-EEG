@@ -17,7 +17,7 @@ if mod(str2double(handles.TRIALS_REM),80)==0
 end
 
 % Send Pulse
-if x == 1 && str2double(handles.single) > 0
+if x == 1
     % single_pulse(str2double(handles.power),s);
     display('SINGLE PULSE')
     single = str2double(handles.single) - 1;
@@ -48,7 +48,7 @@ elseif  x == 3
     %     data = 13;
     %     putvalue(dio.Line(1:4),data)
 elseif  x == 4
-    % custom_pulse(str2double(handles.power),str2double(handles.delay),str2double(handles.cp_percent),str2double(handles.tp_percent),s);
+    % icf_pulse(str2double(handles.power),s);
     display('CUSTOM PULSE')
     custom = str2double(handles.custom) - 1;
     handles.custom = num2str(custom);
@@ -61,43 +61,35 @@ elseif  x == 4
 end
 
 % Chose next pulse
-if x == 1 && str2double(handles.lici) > 0
+if x == 1 && str2double(handles.lici) ~= 0
     x = 2;
-elseif x == 1 && str2double(handles.lici) == 0 && str2double(handles.icf) > 0
+elseif x == 1 && str2double(handles.lici) == 0 && str2double(handles.icf) ~= 0
     x = 3;
-elseif x == 1 && str2double(handles.lici) == 0 && str2double(handles.icf) == 0 && str2double(handles.custom) > 0
+elseif x == 1 && str2double(handles.lici) == 0 && str2double(handles.icf) == 0 && str2double(handles.custom) ~= 0
     x = 4;
 elseif x == 1
     x = 1;
-elseif x == 2 && str2double(handles.icf) > 0
+elseif x == 2 && str2double(handles.icf) ~= 0
     x = 3;
-elseif x == 2 && str2double(handles.icf) == 0 && str2double(handles.custom) > 0
+elseif x == 2 && str2double(handles.icf) == 0 && str2double(handles.custom) ~= 0
     x = 4;
-elseif x == 2 && str2double(handles.icf) == 0 && str2double(handles.custom) == 0 && str2double(handles.single) > 0
+elseif x == 2 && str2double(handles.icf) == 0 && str2double(handles.custom) == 0 && str2double(handles.single) ~= 0
     x = 1;
 elseif x == 2
     x = 2;
-elseif x == 3 && str2double(handles.custom) > 0
+elseif x == 3 && str2double(handles.custom) ~= 0
     x = 4;
-elseif x == 3 && str2double(handles.custom) == 0 && str2double(handles.single) > 0
+elseif x == 3 && str2double(handles.custom) == 0 && str2double(handles.single) ~= 0
     x = 1;
-elseif x == 3 && str2double(handles.custom) == 0 && str2double(handles.single) == 0 && str2double(handles.lici) > 0
+elseif x == 3 && str2double(handles.custom) == 0 && str2double(handles.single) == 0 && str2double(handles.lici) ~= 0
     x = 2;
 elseif x == 3
     x = 3;
-elseif x == 4 && str2double(handles.single) > 0
-    x = 1;
-elseif x == 4 && str2double(handles.single) == 0 && str2double(handles.lici) > 0
-    x = 2;
-elseif x == 4 && str2double(handles.single) == 0 && str2double(handles.lici) == 0 && str2double(handles.icf) > 0
-    x = 3;
-elseif x == 4
-    x = 4;
 end
 
 i = i + 1;
 
-TRIALS_REM = str2double(handles.lici)+str2double(handles.icf)+str2double(handles.single)+str2double(handles.custom);
+TRIALS_REM = str2double(handles.lici)+str2double(handles.icf)+str2double(handles.single);
 handles.TRIALS_REM = num2str(TRIALS_REM);
 
 end
