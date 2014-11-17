@@ -30,6 +30,12 @@ if strcmp(type, 'master') ==1
     else
         error('value is negative');
     end
+    
+    % get rid of values with possible errors
+    
+    if strcmp(output, '@079')
+        output = '@080''';
+    end
 end
 % Slave Power
 
