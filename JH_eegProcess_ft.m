@@ -1,18 +1,20 @@
 %% This is the EEGLAB
 
 prompt = sprintf([' \n \n Please type the number of the file you would like to process: \n \n \n' ...
-' 1  \\/Work\\/Fieldtrip Example data\\/jimher_toolkit_demo_dataset_.vhdr \n' ...
-' 2  \\Work\\/EEG_Tests\\/Second Practice test 02-07-2014\\/Pilot2_pairedpulse_LeftM1_45.vhdr \n' ...
-' 3  \\Work\\/EEG_Tests\\/Second Practice test 02-07-2014\\/Pilot2_singlepulse_LeftM1_45.vhdr \n' ...
-' 4  \\Work\\/EEG_Tests\\/Giovanni test 03-06-2014\\/singlepulse_52.vhdr ' ...
-' \n 5  \\/Work\\/EEG_Tests\\/Giovanni test 03-06-2014\\/lici100.vhdr ' ...
-' \n 7  \\/Work\\/EEG_Tests\\/Second Practice test 02-07-2014\\/ramp_leftM!_100.vhdr ' ... 
-' \n 8  \\/Work\\/EEG_Tests\\/Second Practice test 02-07-2014\\/ramp_leftM!_140.vhdr ' ...
-' \n 9  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_35_singlepulse.vhdr ' ...
-' \n 10  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_48_singleandLICI_LeftM1.vhdr'  ...
-' \n 11  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_47_LICI_leftM1.vhdr ' ...
-' \n 12  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_single35_refnose.vhdr' ...
-' \n 13  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_single_35_ref_and_ground_nose.vhdr \n \n ']);
+    ' 1  \\/Work\\/Fieldtrip Example data\\/jimher_toolkit_demo_dataset_.vhdr \n' ...
+    ' 2  \\Work\\/EEG_Tests\\/Second Practice test 02-07-2014\\/Pilot2_pairedpulse_LeftM1_45.vhdr \n' ...
+    ' 3  \\Work\\/EEG_Tests\\/Second Practice test 02-07-2014\\/Pilot2_singlepulse_LeftM1_45.vhdr \n' ...
+    ' 4  \\Work\\/EEG_Tests\\/Giovanni test 03-06-2014\\/singlepulse_52.vhdr ' ...
+    ' \n 5  \\/Work\\/EEG_Tests\\/Giovanni test 03-06-2014\\/lici100.vhdr ' ...
+    ' \n 7  \\/Work\\/EEG_Tests\\/Second Practice test 02-07-2014\\/ramp_leftM!_100.vhdr ' ...
+    ' \n 8  \\/Work\\/EEG_Tests\\/Second Practice test 02-07-2014\\/ramp_leftM!_140.vhdr ' ...
+    ' \n 9  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_35_singlepulse.vhdr ' ...
+    ' \n 10  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_48_singleandLICI_LeftM1.vhdr'  ...
+    ' \n 11  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_47_LICI_leftM1.vhdr ' ...
+    ' \n 12  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_single35_refnose.vhdr' ...
+    ' \n 13  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_single_35_ref_and_ground_nose.vhdr' ...
+    ' \n 14  This will let you enter the path of a new file \n \n ']);
+
 
 result = input(prompt);
 
@@ -20,6 +22,8 @@ if ismember(result, [ 1 3 4 6 7 8 9 10 12 13])
     type = 1;
 elseif ismember(result, [2 5 11])
     type = 2;
+elseif ismember(result, [14])
+    type = 0;
 end
 
 switch result
@@ -49,29 +53,53 @@ switch result
         file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_single35_refnose.vhdr';
     case 13
         file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_single_35_ref_and_ground_nose.vhdr';
+    case 14
+        prompt = sprintf([' \n Please enter the path of the ".vhdr" file you would like to process. \n \n ']);
+        file_name = input(prompt);
+        prompt = sprintf([' \n \n Please type the number of the file type you would like to process: \n \n \n' ...
+            ' 1  Single Pulse \n' ...
+            ' 2  Double Pulse \n' ...
+            ' 3  ICF Pulse' ...
+            ' \n 4  mix  \n \n ']);
+        type = input(prompt);
+        
+        if ismember(type, [ 1 ])
+            type = 1;
+        elseif ismember(type, [2 ])
+            type = 2;
+        elseif ismember(type, [3])
+            type = 3;
+        elseif ismember(type, [4])
+            type = 4;
+        end
         
 end
 
 prefix_vec = strfind(file_name, '\');
+if isempty(prefix_vec)
+    prefix_vec = strfind(file_name, '/');
+end   
 prefix = file_name(1:prefix_vec(end)-1);
 suffix = file_name(prefix_vec(end)+1:end);
 
 
-addpath('C:\Users\jay\Desktop\Work\TMS-EEG\');
-addpath('C:\Program Files\MATLAB\R2011a\toolbox\eeglab13_3_2b');
+addpath('/data/near/jay/work/TMS-EEG');
+addpath('/data/near/jay/work/eeglab13_3_2b');
 
 eeglab
 
 EEG = pop_loadbv(prefix,suffix);
-EEG.setname='single100';
+EEG.setname='raw_data';
 EEG = eeg_checkset( EEG );
 
 %choose channel file
 
 if EEG.nbchan == 30
-    EEG=pop_chanedit(EEG, 'load',{'C:\\Users\\jay\\Desktop\\Work\\Channels\\jay_good_channels_30.ced' 'filetype' 'autodetect'});
+    EEG=pop_chanedit(EEG, 'load',{'/data/near/jay/channels/jay_good_channels_30.ced' 'filetype' 'autodetect'});
 elseif EEG.nbchan == 32
-    EEG=pop_chanedit(EEG, 'load',{'C:\\Users\\jay\\Desktop\\Work\\Channels\\jay_good_channels.ced' 'filetype' 'autodetect'},'delete',32);
+    EEG=pop_chanedit(EEG, 'load',{'/data/near/jay/channels/jay_good_channels.ced' 'filetype' 'autodetect'},'delete',32);
+elseif EEG.nbchan >= 60
+    %maybe figure out how to get the channel here
 else
     error('you messed up the channels');
 end
@@ -79,16 +107,21 @@ end
 EEG = eeg_checkset( EEG );
 
 %% make events if they arent already in the data
-if result < 9
-    makeEvent(EEG,5000);
-    EEG = pop_importevent( EEG, 'append','no','event','C:\\Users\\jay\\Desktop\\Work\\TMS-EEG\\event.txt','fields',{'latency' 'type'},'skipline',1,'timeunit',1);
+
+prompt = sprintf(['\n Do pulse events need to be located?   [y/n]  \n\n']);
+place_events = input(prompt);
+
+if strcmp(place_events, 'y')
+    makeEventNew(EEG,5000);
+    EEG = pop_importevent( EEG, 'append','no','event', '/data/near/jay/work/TMS-EEG/event.txt','fields',{'latency' 'type'},'skipline',1,'timeunit',1);
     EEG = eeg_checkset( EEG );
 end
 
 %% Epoch the data
-eventtype = EEG.event(2).type;
-eventtype2 = EEG.event(3).type;
-EEG = pop_epoch( EEG, {  eventtype eventtype2  }, [-1  1], 'newname', 'single epochs', 'epochinfo', 'yes');
+
+
+
+EEG = pop_epoch( EEG, {  'S 1' 'S 2' 'S 3' 'S1' 'S2' 'S3'  }, [-1  1], 'newname', 'single epochs', 'epochinfo', 'yes');
 EEG = eeg_checkset( EEG );
 EEG = pop_rmbase( EEG, [-900     -50]);
 EEG = eeg_checkset( EEG );
@@ -99,8 +132,8 @@ numEpochs = EEG.trials;
 %     data. When that EEG file is in the workspace this should work
 % % %
 %real shit
-addpath('C:\Users\jay\Desktop\Work\fieldtrip-20140804');
-addpath('C:\Users\jay\Desktop\Work\fieldtrip-20140804\fileio');
+addpath('/data/near/jay/work/fieldtrip-20140804');
+addpath('/data/near/jay/work/fieldtrip-20140804/fileio');
 %% first we load the cfg with the data and define the trial
 %
 %  ** make sure to change the dataset when you use different data sets
@@ -115,7 +148,7 @@ cfg.hdr = ft_read_header(cfg.dataset);
 cfg.continuous              = 'no';
 cfg.trialdef.prestim        = 1;         % prior to event onset
 cfg.trialdef.poststim       = 1;        % after event onset
-cfg.trialdef.eventtype      = 'p-pulse'; % see above
+cfg.trialdef.eventtype      = 'S1'; % see above
 cfg.trialdef.eventvalue     = 1000 ;
 
 %     Change this when not doing field trip example
@@ -137,6 +170,12 @@ elseif strfind(title, 'Giovanni test 03-06-2014')== 37
     cfg.trialdef.poststim       = 1;        % after event onset
     cfg.trl = ft_makeEvent(cfg);
     data_set = 0;
+else
+    cfg.trialdef.prestim        = 1;         % prior to event onset
+    cfg.trialdef.poststim       = 1;        % after event onset
+    cfg.trl = ft_makeEventNew(cfg);
+    data_set = 4;
+   
 end
 
 cfg = ft_definetrial(cfg);
@@ -155,7 +194,10 @@ elseif data_set ==2
     data = ft_selectdata(data, 'channel', selchan);
 elseif data_set == 0
     selchan = ft_channelselection({'all' '-FC1' '-Fz' }, cfg.data.label);
-    data = ft_selectdata(data, 'channel', selchan);    
+    data = ft_selectdata(data, 'channel', selchan); 
+else
+    selchan = ft_channelselection({'all' '-CPz' '-POz' }, cfg.data.label);
+    data = ft_selectdata(data, 'channel', selchan);  
 end
 
 
@@ -172,16 +214,19 @@ prompt = ['\n \n At what cut-off time would you like your TMS ringing cut? \n '.
 
 poststim = input(prompt);
 
-if type ==1
+if type ==1 || type == 4
     cfg = [];
+    if type == 4
+        cfg.trials = find(trl(:,4)==1);
+    end
     cfg.trl = trl;
     cfg.continuous = 'no';
     cfg.method = 'marker';
     
-    if data_set == 1 || data_set ==0
-        cfg.prestim = 0;
-    elseif data_set == 2
+    if data_set == 2
         cfg.prestim = -0.007;
+    else
+        cfg.prestim = 0;
     end
   
     if poststim == 0
@@ -200,8 +245,8 @@ if type ==1
     
     prestim = cfg.prestim;
     cfg.Fs = 5000;
-    triggers = {'S  1', 'S  2'};
-    cfg.trialdef.eventtype      = 'Stimulus'; % see above
+    triggers = {'S 1', 'S 2'};
+    cfg.trialdef.eventtype      = 'S1'; % see above
     cfg.trialdef.eventvalue     = triggers ;
     %cfg.trialdef.eventtype  = 'p-pulse';
     %cfg.trialdef.eventvalue = 1000;
@@ -216,18 +261,21 @@ if type ==1
 end
 
 
-if type ==2
+if type ==2 || type == 4
     
     %remove the second pulse
     cfg = [];
     cfg.trl = trl;
+    if type == 4
+        cfg.trials = find(trl(:,4)==2);
+    end
     cfg.continuous = 'no';
     cfg.method = 'marker';
     
-    if data_set == 1 || data_set ==0
+    if data_set == 2
+         cfg.prestim = -0.105;    
+    else
         cfg.prestim = -0.098;
-    elseif data_set == 2
-        cfg.prestim = -0.105;
     end
   
     if poststim == 0
@@ -239,7 +287,7 @@ if type ==2
         cutoff = poststim+0.1;
     end
     
-     if data_set == 2
+    if data_set == 2
         cfg.poststim = cutoff+0.007;
         cutoff = cfg.poststim;
     end
@@ -248,7 +296,7 @@ if type ==2
     
     prestim = cfg.prestim;
     cfg.Fs = 5000;
-    cfg.trialdef.eventtype  = 'p-pulse';
+    cfg.trialdef.eventtype  = 'S2';
     cfg.trialdef.eventvalue = 1000;
     cfg.trialfun = 'ft_markpulse';
     [cfg_artifact, artifact] = ft_artifact_tms(cfg, data);
@@ -265,9 +313,9 @@ if type ==2
     cfg.method = 'marker';
     cfg.prestim = 0.002;
     
-    cfg.poststim = 0.035;
+    cfg.poststim = 0.010;
     cfg.Fs = 5000;
-    cfg.trialdef.eventtype  = 'p-pulse';
+    cfg.trialdef.eventtype  = 'S2';
     cfg.trialdef.eventvalue = 1000;
     cfg.trialfun = 'ft_markpulse';
     [cfg_artifact, artifact] = ft_artifact_tms(cfg, data);
@@ -277,6 +325,11 @@ if type ==2
     cfg_artifact.artfctdef.minaccepttim = 0.01;
     data = ft_rejectartifact(cfg_artifact, data);
 end
+
+if type == 4
+   %cfg.trials =  
+end
+    
  
  
 %% Display the segmented data including the artifacts that are gone
@@ -375,7 +428,7 @@ figure;
 cfg           = [];
 cfg.component = 1:size(comp_tms.label,1);
 cfg.comment   = 'no';
-cfg.layout    = 'easycapM23'; % If you use a function that requires plotting of topographical information you need to supply the function with the location of your channels
+cfg.layout    = 'easycapM11'; % If you use a function that requires plotting of topographical information you need to supply the function with the location of your channels
 ft_topoplotIC(cfg, comp_tms);
 
 figure;
