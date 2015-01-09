@@ -18,7 +18,7 @@ event_pos = [,];
 i = 1;
 j = 0;
 count = 1;
-offset = 2;
+offset = 3;
 
    
 while j <= size(cfg.data.trial,2)-1

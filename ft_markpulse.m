@@ -4,8 +4,8 @@ function [ pulses] = ft_markpulse( cfg )
 
 temptrl = cfg.trl;
 
-    pulses(:,1) = temptrl(:,1)+cfg.Fs-(cfg.Fs*cfg.prestim);
-    pulses(:,2) = temptrl(:,1)+cfg.Fs + (cfg.Fs*cfg.poststim);
+    pulses(:,1) = temptrl(cfg.trials,1)+cfg.Fs-(cfg.Fs*cfg.prestim);
+    pulses(:,2) = temptrl(cfg.trials,1)+cfg.Fs + (cfg.Fs*cfg.poststim);
 
 end
 
