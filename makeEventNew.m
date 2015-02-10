@@ -7,23 +7,23 @@ count = 1;
 event_channel = [];
 event_pos = [];
 
-   while i <= size(EEG.data,2)
+   while i <= size(EEG.data,2)-510
         
        %Check for single pulse
        if (abs(EEG.data(5,i))>1000)
            
            if abs(EEG.data(5,i+505))<1000 && abs(EEG.data(5,i+60))<1000 && abs(EEG.data(5,i+18))<1000                 
-               event_pos(count ,1) = i -2;
+               event_pos(count ,1) = i -4;
                event_pos(count,2) = 1;     %this means its a single
                count = count + 1;
                i = i+15000;
            elseif  abs(EEG.data(5,i+502))>1000 && abs(EEG.data(5,i+60))<1000 && abs(EEG.data(5,i+18))<1000  
-               event_pos(count ,1) = i -2;
+               event_pos(count ,1) = i -4;
                event_pos(count,2) = 2;     %this means its a double
                count = count + 1;
                i = i+15000;
            elseif  abs(EEG.data(5,i+502))<1000 && abs(EEG.data(5,i+60))>1000 && abs(EEG.data(5,i+18))<1000
-               event_pos(count ,1) = i -2;
+               event_pos(count ,1) = i -4;
                event_pos(count,2) = 3;     %this means its a icf
                count = count + 1;
                i = i+15000;

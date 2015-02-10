@@ -108,20 +108,16 @@ EEG = eeg_checkset( EEG );
 
 %% make events if they arent already in the data
 
-prompt = sprintf(['\n Do pulse events need to be located?   [y/n]  \n\n']);
-place_events = input(prompt);
-
-if strcmp(place_events, 'y')
     makeEventNew(EEG,5000);
     EEG = pop_importevent( EEG, 'append','no','event', 'C:\Users\jay\Desktop\Work\TMS-EEG\event.txt','fields',{'latency' 'type'},'skipline',1,'timeunit',1);
     EEG = eeg_checkset( EEG );
-end
+
 
 %% Epoch the data
 
 
 
-EEG = pop_epoch( EEG, {  'S 1' 'S 2' 'S 3' 'S1' 'S2' 'S3'  }, [-1  1], 'newname', 'single epochs', 'epochinfo', 'yes');
+EEG = pop_epoch( EEG, {  'S 1' 'S 2' 'S 3' 'S1' 'S2' 'S3' 'S4' 'S 4' }, [-1  1], 'newname', 'single epochs', 'epochinfo', 'yes');
 EEG = eeg_checkset( EEG );
 EEG = pop_rmbase( EEG, [-900     -50]);
 EEG = eeg_checkset( EEG );
@@ -134,7 +130,7 @@ numEpochs = EEG.trials;
 %real shit
 addpath('C:\Users\jay\Desktop\Work\fieldtrip-20140804');
 addpath('C:\Users\jay\Desktop\Work\fieldtrip-20140804\fileio');
-%% first we load the cfg with the data and define the trial
+    %% first we load the cfg with the data and define the trial
 %
 %  ** make sure to change the dataset when you use different data sets
 cfg = [];
@@ -151,7 +147,7 @@ cfg.continuous              = 'no';
 cfg.trialdef.prestim        = 1;         % prior to event onset
 cfg.trialdef.poststim       = 1;        % after event onset
 cfg.trialdef.eventtype      = 'stimulus'; % see above
-cfg.trialdef.eventvalue     = {'S1' 'S2'} ;
+cfg.trialdef.eventvalue     = {'S1' 'S2' 'S3' 'S4' 'S 1' 'S 2' 'S 3' 'S 4'} ;
 
 %     Change this when not doing field trip example
 cfg.data = eeglab2fieldtrip(EEG, 'preprocessing', 'none');
@@ -182,6 +178,9 @@ trl = cfg.trl;
 cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
 ft_databrowser(cfg, data);
 
+chans = 0;
+
+while chans == 0
 prompt = '\n \n Please enter a cell array containing the names of the bad channels \n \n ';
 badChannels = input(prompt);
 
@@ -211,8 +210,16 @@ else
     data = ft_selectdata(data, 'channel', selchan);  
 end
 
+        cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
+        ft_databrowser(cfg, data);
+        
+prompt = '\n \n Are you pleased with the result?  [1 = y / 0 = n] \n \n ';
+chans = input(prompt);
+
+end
 
 %% Divide the data if it is of type 4
+%data1
 
 trl_2 = trl;
 
@@ -224,41 +231,28 @@ trials_icf = find(trl(:,4)==3);
 trials_custom = find(trl(:,4)==4);
 
 
-for i = 1:size(trials_single,1)
-    data_single.trial{i} = data.trial{trials_single(i)};
-    data_single.time{i} = data.time{trials_single(i)};
-end
-for i = 1:size(trials_lici,1)
-    data_lici.trial{i} = data.trial{trials_lici(i)};
-    data_lici.time{i} = data.time{trials_lici(i)};
-end
-for i = 1:size(trials_icf,1)
-    data_icf.trial{i} = data.trial{trials_icf(i)};
-    data_icf.time{i} = data.time{trials_icf(i)};
-end
-for i = 1:size(trials_custom,1)
-    data_custom.trial{i} = data.trial{trials_custom(i)};
-    data_custom.time{i} = data.time{trials_custom(i)};
-end
-
-trl_single = trl(trials_single,:);
-trl_lici = trl(trials_lici,:);
-trl_icf = trl(trials_icf,:);
-trl_custom = trl(trials_custom,:);
-
-
-
 %% set rejection markers
-
+%data2
 %type is 1 if single pulse or 2 if paired pulse
+result = 'n';
 
-
-if exist('data_single')
-    
+if ~isempty(trials_single)
+    while strcmp(result, 'n')
 prompt = ['\n \n At what cut-off time would you like your TMS ringing cut for SINGLE pulse? \n '...
             ' (note: time is in seconds and 0 means compute automatically) \n \n'];
 
-poststim = input(prompt);
+poststim_single = input(prompt);
+
+ data_single = data;
+    data_single.trial = [];
+    data_single.time = [];
+
+for i = 1:size(trials_single,1)
+    
+    data_single.trial{i} = data.trial{trials_single(i)};
+    data_single.time{i} = data.time{trials_single(i)};
+end
+trl_single = trl(trials_single,:);
     cfg = [];
     
     cfg.trl = trl_single;
@@ -271,21 +265,21 @@ poststim = input(prompt);
         cfg.prestim = 0;
     end
   
-    if poststim == 0
-        [cutoff cutinterval time] = ft_getCutoff(data, cfg, type)% 1 if single pulse, 2 if double pulse
-        cfg.poststim = cutoff;
+    if poststim_single == 0
+        [cutoff_single cutinterval time] = ft_getCutoff(data_single, cfg, type);% 1 if single pulse, 2 if double pulse
+        cfg.poststim = cutoff_single;
     else
         
-        cfg.poststim = poststim;
-        cutoff = poststim;
+        cfg.poststim = poststim_single;
+        cutoff_single = poststim_single;
     end
     
     if data_set == 2
-        cfg.poststim = cutoff+0.007;
-        cutoff = cfg.poststim;
+        cfg.poststim = cutoff_single+0.007;
+        cutoff_single = cfg.poststim;
     end
     
-    prestim = cfg.prestim;
+    prestim_single = cfg.prestim;
     cfg.Fs = 5000;
     triggers = {'S 1', 'S 2'};
     cfg.trialdef.eventtype      = 'S1'; % see above
@@ -297,23 +291,38 @@ poststim = input(prompt);
     end
     cfg.trialfun = 'ft_markpulse';
     
-    [cfg_artifact, artifact] = ft_artifact_tms(cfg, data);
+    [cfg_artifact_single, artifact_single] = ft_artifact_tms(cfg, data_single);
     
     % reject artifact
-    cfg_artifact.artfctdef.reject = 'partial';
-    cfg_artifact.artfctdef.minaccepttim = 0.01;
-    data = ft_rejectartifact(cfg_artifact, data);
+    cfg_artifact_single.artfctdef.reject = 'partial';
+    cfg_artifact_single.artfctdef.minaccepttim = 0.01;
+    data_single = ft_rejectartifact(cfg_artifact_single, data_single);
     
+    cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
+    ft_databrowser(cfg, data_single);
+    
+    prompt = '\n \n Is the cut-off at an acceptable latency?     [y/n] \n \n ';
+    result = input(prompt);
+    end
 end
 
-
-if exist('data_lici')
-    
+result = 'n';
+if ~isempty(trials_lici)
+     while strcmp(result, 'n')
 prompt = ['\n \n At what cut-off time would you like your TMS ringing cut for LICI pulse? \n '...
             ' (note: time is in seconds and 0 means compute automatically) \n \n'];
 
-poststim = input(prompt);
+poststim_lici = input(prompt);
     
+ data_lici = data;
+    data_lici.trial = [];
+    data_lici.time = [];
+for i = 1:size(trials_lici,1)
+    
+    data_lici.trial{i} = data.trial{trials_lici(i)};
+    data_lici.time{i} = data.time{trials_lici(i)};
+end
+trl_lici = trl(trials_lici,:);
     %remove the second pulse
     cfg = [];
     cfg.trl = trl_lici;
@@ -327,23 +336,23 @@ poststim = input(prompt);
         cfg.prestim = -0.098;
     end
   
-    if poststim == 0
-        [cutoff cutinterval time] = ft_getCutoff(data, cfg, type)% 1 if single pulse, 2 if double pulse
-        cfg.poststim = cutoff;
+    if poststim_lici == 0
+        [cutoff_lici cutinterval time] = ft_getCutoff(data_lici, cfg, type);% 1 if single pulse, 2 if double pulse
+        cfg.poststim = cutoff_lici;
     else
         
-        cfg.poststim = poststim+0.1;
-        cutoff = poststim+0.1;
+        cfg.poststim = poststim_lici+0.1;
+        cutoff_lici = poststim_lici+0.1;
     end
     
     if data_set == 2
-        cfg.poststim = cutoff+0.007;
-        cutoff = cfg.poststim;
+        cfg.poststim = cutoff_lici+0.007;
+        cutoff_lici = cfg.poststim;
     end
     
      
     
-    prestim = cfg.prestim;
+    prestim_lici = cfg.prestim;
     cfg.Fs = 5000;
     cfg.trialdef.eventtype  = 'S2';
     cfg.trialdef.eventvalue = 'S2';
@@ -351,12 +360,12 @@ poststim = input(prompt);
         cfg.trials = trials_lici;
     end
     cfg.trialfun = 'ft_markpulse';
-    [cfg_artifact, artifact] = ft_artifact_tms(cfg, data);
+    [cfg_artifact_lici, artifact_lici] = ft_artifact_tms(cfg, data_lici);
     
     % reject artifact
-    cfg_artifact.artfctdef.reject = 'partial';
-    cfg_artifact.artfctdef.minaccepttim = 0.01;
-    data = ft_rejectartifact(cfg_artifact, data);
+    cfg_artifact_lici.artfctdef.reject = 'partial';
+    cfg_artifact_lici.artfctdef.minaccepttim = 0.01;
+    data_lici = ft_rejectartifact(cfg_artifact_lici, data_lici);
     
     % remove first pulse
     cfg = [];
@@ -372,21 +381,40 @@ poststim = input(prompt);
     if type == 4
         cfg.trials = trials_lici;
     end
+    cfg.type = 2;
     cfg.trialfun = 'ft_markpulse';
-    [cfg_artifact, artifact] = ft_artifact_tms(cfg, data);
+    [cfg_artifact_lici, artifact_lici] = ft_artifact_tms(cfg, data_lici);
     
     % reject artifact
-    cfg_artifact.artfctdef.reject = 'partial';
-    cfg_artifact.artfctdef.minaccepttim = 0.01;
-    data = ft_rejectartifact(cfg_artifact, data);
+    cfg_artifact_lici.artfctdef.reject = 'partial';
+    cfg_artifact_lici.artfctdef.minaccepttim = 0.01;
+    data_lici = ft_rejectartifact(cfg_artifact_lici, data_lici);
+    
+    cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
+    ft_databrowser(cfg, data_lici);
+    
+    prompt = '\n \n Is the cut-off at an acceptable latency?     [y/n] \n \n ';
+    result = input(prompt);
+     end
 end
 
-if exist('data_icf')
-    
+
+result = 'n';
+if ~isempty(trials_icf)
+     while strcmp(result, 'n')
 prompt = ['\n \n At what cut-off time would you like your TMS ringing cut for ICF pulse? \n '...
             ' (note: time is in seconds and 0 means compute automatically) \n \n'];
 
-poststim = input(prompt);
+poststim_icf = input(prompt);
+ data_icf= data;
+    data_icf.trial = [];
+    data_icf.time = [];
+for i = 1:size(trials_icf,1)
+    
+    data_icf.trial{i} = data.trial{trials_icf(i)};
+    data_icf.time{i} = data.time{trials_icf(i)};
+end
+trl_icf = trl(trials_icf,:);
     cfg = [];
     
     cfg.trl = trl_icf;
@@ -395,16 +423,16 @@ poststim = input(prompt);
 
     cfg.prestim = 0;
 
-    if poststim == 0
-        [cutoff cutinterval time] = ft_getCutoff(data, cfg, type)% 1 if single pulse, 2 if double pulse
-        cfg.poststim = cutoff;
+    if poststim_icf == 0
+        [cutoff_icf cutinterval time] = ft_getCutoff(data_icf, cfg, type);% 1 if single pulse, 2 if double pulse
+        cfg.poststim = cutoff_icf;
     else
         
-        cfg.poststim = poststim;
-        cutoff = poststim;
+        cfg.poststim = poststim_icf;
+        cutoff_icf = poststim_icf;
     end
     
-    prestim = cfg.prestim;
+    prestim_icf = cfg.prestim;
     cfg.Fs = 5000;
     triggers = {'S 1', 'S 2'};
     cfg.trialdef.eventtype      = 'S1'; % see above
@@ -416,21 +444,40 @@ poststim = input(prompt);
     end
     cfg.trialfun = 'ft_markpulse';
     
-    [cfg_artifact, artifact] = ft_artifact_tms(cfg, data);
+    [cfg_artifact_icf, artifact_icf] = ft_artifact_tms(cfg, data_icf);
     
     % reject artifact
-    cfg_artifact.artfctdef.reject = 'partial';
-    cfg_artifact.artfctdef.minaccepttim = 0.01;
-    data = ft_rejectartifact(cfg_artifact, data);
+    cfg_artifact_icf.artfctdef.reject = 'partial';
+    cfg_artifact_icf.artfctdef.minaccepttim = 0.01;
+    data_icf = ft_rejectartifact(cfg_artifact_icf, data_icf);
+
+    cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
+    ft_databrowser(cfg, data_icf);
     
+    prompt = '\n \n Is the cut-off at an acceptable latency?     [y/n] \n \n ';
+    result = input(prompt);
+    
+     end
 end
 
-if exist('data_custom')
-    
+result = 'n';
+if ~isempty(trials_custom)
+     while strcmp(result, 'n')
 prompt = ['\n \n At what cut-off time would you like your TMS ringing cut for CUSTOM pulse? \n '...
             ' (note: time is in seconds and 0 means compute automatically) \n \n'];
 
-poststim = input(prompt);
+poststim_custom = input(prompt);
+
+    data_custom = data;
+    data_custom.trial = [];
+    data_custom.time = [];
+for i = 1:size(trials_custom,1)
+   
+    data_custom.trial{i} = data.trial{trials_custom(i)};
+    data_custom.time{i} = data.time{trials_custom(i)};
+end
+
+trl_custom = trl(trials_custom,:);
     cfg = [];
     
     cfg.trl = trl_custom;
@@ -439,16 +486,16 @@ poststim = input(prompt);
 
     cfg.prestim = 0;
 
-    if poststim == 0
-        [cutoff cutinterval time] = ft_getCutoff(data, cfg, type)% 1 if single pulse, 2 if double pulse
-        cfg.poststim = cutoff;
+    if poststim_custom == 0
+        [cutoff_custom cutinterval time] = ft_getCutoff(data_custom, cfg, type)% 1 if single pulse, 2 if double pulse
+        cfg.poststim = cutoff_custom;
     else
         
-        cfg.poststim = poststim;
-        cutoff = poststim;
+        cfg.poststim = poststim_custom;
+        cutoff_custom = poststim_custom;
     end
     
-    prestim = cfg.prestim;
+    prestim_custom = cfg.prestim;
     cfg.Fs = 5000;
     triggers = {'S 1', 'S 2'};
     cfg.trialdef.eventtype      = 'S1'; % see above
@@ -460,67 +507,175 @@ poststim = input(prompt);
     end
     cfg.trialfun = 'ft_markpulse';
     
-    [cfg_artifact, artifact] = ft_artifact_tms(cfg, data);
+    [cfg_artifact_custom, artifact_custom] = ft_artifact_tms(cfg, data_custom);
     
     % reject artifact
-    cfg_artifact.artfctdef.reject = 'partial';
-    cfg_artifact.artfctdef.minaccepttim = 0.01;
-    data = ft_rejectartifact(cfg_artifact, data);
+    cfg_artifact_custom.artfctdef.reject = 'partial';
+    cfg_artifact_custom.artfctdef.minaccepttim = 0.01;
+    data_custom = ft_rejectartifact(cfg_artifact_custom, data_custom);
     
+    cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
+    ft_databrowser(cfg, data_custom);
+    
+    prompt = '\n \n Is the cut-off at an acceptable latency?     [y/n] \n \n ';
+    result = input(prompt);
+     end
 end
     
  
+ % Memory 74% (1,777MB)
  
 %% Display the segmented data including the artifacts that are gone
  %
- 
- % put the data from each of the segmented datasets into one
- data_temp.trial(trial_lici) = data_lici.trial;
- data_temp.trial(trial_single) = data_single.trial;
- data_temp.trial(trial_icf) = data_icf.trial;
- data_temp.trial(trial_custom) = data_custom.trial;
- data_total.trial = cell(1,size(data_temp.trial,2));
- data_total.trial = data_temp.trial;
- data_temp.time(trial_lici) = data_lici.time;
- data_temp.time(trial_single) = data_single.time;
- data_temp.time(trial_icf) = data_icf.time;
- data_temp.time(trial_custom) = data_custom.time;
- data_total.time = cell(1,size(data_temp.time,2));
- data_total.time = data_temp.time;
- 
- cfg = [];
-cfg.artfctdef = cfg_artifact.artfctdef; % Store previously obtained artifact definition
-cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
-ft_databrowser(cfg, data);
 
-prompt = '\n \n Is the cut-off at an acceptable latency?     [y/n] \n \n ';
-result = input(prompt);
+ 
+ % data structure is all messed up here
+ 
+ 
+stop = exist('data_single')+exist('data_lici')+exist('data_icf')+exist('data_custom');
 
 
-%%
-% jump
-cfg                    = [];
-cfg.headerfile = file_name;
- 
-% channel selection, cutoff and padding
-cfg.artfctdef.zvalue.channel    = 'EEG';
-cfg.artfctdef.zvalue.cutoff     = 20;
-cfg.artfctdef.zvalue.trlpadding = 0;
-cfg.artfctdef.zvalue.artpadding = 0;
-cfg.artfctdef.zvalue.fltpadding = 0;
- 
-% algorithmic parameters
-cfg.artfctdef.zvalue.cumulative    = 'yes';
-cfg.artfctdef.zvalue.medianfilter  = 'yes';
-cfg.artfctdef.zvalue.medianfiltord = 9;
-cfg.artfctdef.zvalue.absdiff       = 'yes';
- 
-% make the process interactive
-cfg.artfctdef.zvalue.interactive = 'yes';
- 
-[cfg, artifact_jump] = ft_artifact_zvalue(cfg,data_total);
+%******************************* for loop here **************************
+%for x = 1:stop
+    x=2;
+    
+    if exist('data_single') && x==1
+        do_ica = 1;
+        trials = trl_single;
+        cutoff = cutoff_single;
+        prestim = prestim_single;
+        data = data_single;
+        cfg = [];
+        cfg.artfctdef = cfg_artifact_single.artfctdef; % Store previously obtained artifact definition
+        
+    end
+    if exist('data_lici') && x==2
+        do_ica = 2;
+        trials = trl_lici;
+        cutoff = cutoff_lici;
+        prestim = prestim_lici;
+        data = data_lici;
+        cfg = [];
+        cfg.artfctdef = cfg_artifact_lici.artfctdef; % Store previously obtained artifact definition
+        
+    end
+    if exist('data_icf') && x ==3
+        do_ica =3;
+        trials = trl_icf;
+        cutoff = cutoff_icf;
+        prestim = prestim_icf;
+        data = data_icf;
+        cfg = [];
+        cfg.artfctdef = cfg_artifact_icf.artfctdef; % Store previously obtained artifact definition
+     
+    end
+    if exist('data_custom') && x ==4
+        do_ica = 4;
+        trials = trl_custom;
+        cutoff = cutoff_custom;
+        prestim = prestim_custom;
+        data = data_custom;
+        cfg = [];
+        cfg.artfctdef = cfg_artifact_custom.artfctdef; % Store previously obtained artifact definition
+        
+    end
+    
+   
+    %% redefine the trial into original epoch sizes
+    
 
-data = ft_rejectartifact(cfg, data_total);
+if do_ica ==2
+    
+    data_temp = data;
+  	data.trial = cell(1,size(data_temp.trial,2)/3);
+    data.time = cell(1,size(data_temp.time,2)/3);
+    data.sampleinfo = zeros(size(data_temp.time,2)/3,2);
+    trl2 = data_temp.cfg.trl;
+   
+    z=0;
+    for i = 1:size(data_temp.trial,2)/3
+        
+        % odd
+        y = 3*i - 2;
+        data.trial{i} = data_temp.trial{y};
+        
+        w = 3*i - 1;
+        data.trial{i}(:,size(data_temp.trial{w-1},2)+1:size(data_temp.trial{w-1},2)+0.014*data.fsample) = nan;
+        data.trial{i}(:,size(data_temp.trial{w-1},2)+0.014*data.fsample+1:size(data_temp.trial{w-1},2)+0.014*data.fsample+size(data_temp.trial{w},2)) = data_temp.trial{w};
+
+        %even
+        x = 3*i;
+        data.trial{i}(:,size(data_temp.trial{x-1},2)+size(data_temp.trial{x-2},2)+0.014*data.fsample+1:size(data_temp.trial{x-1},2)+size(data_temp.trial{x-2},2)+0.014*data.fsample+(cutoff-0.1)*data.fsample) = nan;
+        data.trial{i}(:,size(data_temp.trial{x-1},2)+size(data_temp.trial{x-2},2)+0.014*data.fsample+(cutoff-0.1)*data.fsample+1:size(data_temp.trial{x-1},2)+size(data_temp.trial{x-2},2)+0.014*data.fsample+(cutoff-0.1)*data.fsample+size(data_temp.trial{x},2)) = data_temp.trial{x};
+      
+        
+        
+        data.time{i} = -1:0.0002:0.9998;
+        data.sampleinfo(i,1) = z*size(data.trial{i},2)+1 ;
+        data.sampleinfo(i,2) = (z+1)*size(data.trial{i},2);
+        
+        z=z+1;
+    end
+    
+    trl = trials;
+else
+    
+    % this is for all the types except LICI
+    
+    data_temp = data;
+  	data.trial = cell(1,size(data_temp.trial,2)/2);
+    data.time = cell(1,size(data_temp.time,2)/2);
+    data.sampleinfo = zeros(size(data_temp.time,2)/2,2);
+    trl2 = data_temp.cfg.trl;
+   
+    z=0;
+    for i = 1:size(data_temp.trial,2)/2
+        
+        % odd
+        y = 2*i - 1;
+        data.trial{i} = data_temp.trial{y};
+       % data.time{i} = data_temp.time{y};
+       
+        %even
+        x = 2*i;
+        data.trial{i}(:,size(data_temp.trial{x-1},2)+1:size(data_temp.trial{x-1},2)+cutoff*data.fsample) = nan;
+        data.trial{i}(:,size(data_temp.trial{x-1},2)+cutoff*data.fsample+1:size(data_temp.trial{x-1},2)+cutoff*data.fsample+size(data_temp.trial{x},2)) = data_temp.trial{x};
+       % data.time{i}(:,size(data_temp.time{x-1},2)+1:size(data_temp.time{x-1},2)+cutoff*data.fsample) = nan;
+        %data.time{i}(:,size(data_temp.time{x-1},2)+cutoff*data.fsample+1:size(data_temp.time{x-1},2)+cutoff*data.fsample+size(data_temp.time{x},2)) = data_temp.time{x};
+        
+        data.time{i} = -1:0.0002:0.9998;
+        data.sampleinfo(i,1) = z*size(data.trial{i},2)+1 ;
+        data.sampleinfo(i,2) = (z+1)*size(data.trial{i},2);
+        
+        z=z+1;
+    end
+    
+    trl = trials;
+end
+% %%
+% % jump
+% cfg                    = [];
+% cfg.headerfile = file_name;
+%  
+% % channel selection, cutoff and padding
+% cfg.artfctdef.zvalue.channel    = 'EEG';
+% cfg.artfctdef.zvalue.cutoff     = 20;
+% cfg.artfctdef.zvalue.trlpadding = 0;
+% cfg.artfctdef.zvalue.artpadding = 0;
+% cfg.artfctdef.zvalue.fltpadding = 0;
+%  
+% % algorithmic parameters
+% cfg.artfctdef.zvalue.cumulative    = 'yes';
+% cfg.artfctdef.zvalue.medianfilter  = 'yes';
+% cfg.artfctdef.zvalue.medianfiltord = 9;
+% cfg.artfctdef.zvalue.absdiff       = 'yes';
+%  
+% % make the process interactive
+% cfg.artfctdef.zvalue.interactive = 'yes';
+%  
+% [cfg, artifact_jump] = ft_artifact_zvalue(cfg,data);
+% 
+% data = ft_rejectartifact(cfg, data);
 
 %% Browse data for bad epochs
 
@@ -536,79 +691,83 @@ rejectArray = input(prompt);
 
 cfg = [];
 cfg.artfctdef.reject = 'complete';
-new_paired = [1 3 18 25 27 28 30 39 40 56 59 66 76 87 92 93 96 100 101 115];
-new_single = [14 15 16 17 23 28 29 43 51 53 56 69 76 78 82 88 94 102 103];
-JH_LICI_47 = [3 5 38 39 61 81 103 112 110 41 47 69];
-JH_single35_ref_n_gnd = [7 20 32];
-JH_single35 = [1 8 24 38 42 44 58 101 102];
-JH_single_47 = [1 2 102 103 107 111 112 113];
-old_single = [1 2 12 14 15 16 22 24 30 31  32 36 40 44 45 51 53 54 64 67 71 72 73];
-old_LICI = [1  32 33 46 56 64 68 76 78 87 89 90 91 92 93 94];
-
-cfg.artfctdef.xxx.artifact = ft_xxxReject(rejectArray , data.fsample);
+cfg.artfctdef.xxx.artifact = ft_xxxReject(data,rejectArray , data.fsample);
 numEpochsRmv = length(rejectArray);
 data = ft_rejectartifact(cfg, data);
 
+
+
 trl = data.cfg.trl;
 
-%% Divide the data if it is of type 4
+%% redefine trial to what it was before we removed the bad trials
 
-trl_2 = trl;
-
-
-
-trials_single = find(trl(:,4)==1);
-trials_lici = find(trl(:,4)==2);
-trials_icf = find(trl(:,4)==3);
-trials_custom = find(trl(:,4)==4);
-
-data_single = data;
-data_lici = data;
-data_icf = data;
-data_custom = data;
-
-for i = 1:size(trials_single,1)
-    data_single.trial{i} = data.trial{trials_single(i)};
-    data_single.time{i} = data.time{trials_single(i)};
+if do_ica == 2
+    
+    trl3 = zeros(size(data.trial,2)*2,3);
+    index = 1;
+    for i = 1: size(data.trial,2)+length(rejectArray)
+        
+        if ~any(rejectArray==i)
+            % odd
+            y = 3*index - 2;
+            trl3(y,1) = (i-1)*size(data.trial{index},2) + 1;
+            trl3(y,2) = (i-1)*size(data.trial{index},2) + find(isnan(data.trial{index}(1,:)),1) - 1;
+            trl3(y,3) = find(isnan(data.trial{index}(1,:)),1) - 1;
+            
+            w = 3*index - 1;
+            last =  find(isnan(data.trial{index}(1,:))==1);
+            r = find(diff(last)~=1);
+           
+            trl3(w,1) = (i-1)*size(data.trial{index},2) + last(r)+ 1;
+            trl3(w,2) = (i-1)*size(data.trial{index},2) + last(r+1) - 1;
+            trl3(w,3) = last(r+1)-last(1);
+            
+            %even
+            x = 3*index;
+            trl3(x,1) = (i-1)*size(data.trial{index},2) + last(end) + 1;
+            trl3(x,2) = (i)*size(data.trial{index},2);
+            trl3(x,3) = last(end);
+            
+            index = index + 1;
+            
+        end
+    end
+    
+else    % redefine everything but lici
+    trl3 = zeros(size(data.trial,2)*2,3);
+    index = 1;
+    for i = 1: size(data.trial,2)+length(rejectArray)
+        
+        if ~any(rejectArray==i)
+            % odd
+            y = 2*index - 1;
+            trl3(y,1) = (i-1)*size(data.trial{index},2) + 1;
+            trl3(y,2) = (i-1)*size(data.trial{index},2) + find(isnan(data.trial{index}(1,:)),1) - 1;
+            trl3(y,3) = find(isnan(data.trial{index}(1,:)),1) - 1;
+            
+            %even
+            x = 2*index;
+            last =  find(isnan(data.trial{index}(1,:))==1);
+            trl3(x,1) = (i-1)*size(data.trial{index},2) + last(end) + 1;
+            trl3(x,2) = (i)*size(data.trial{index},2);
+            trl3(x,3) = -cutoff*data.fsample;
+            
+            index = index + 1;
+            
+        end
+    end
 end
-for i = 1:size(trials_lici,1)
-    data_lici.trial{i} = data.trial{trials_lici(i)};
-    data_lici.time{i} = data.time{trials_lici(i)};
-end
-for i = 1:size(trials_icf,1)
-    data_icf.trial{i} = data.trial{trials_icf(i)};
-    data_icf.time{i} = data.time{trials_icf(i)};
-end
-for i = 1:size(trials_custom,1)
-    data_custom.trial{i} = data.trial{trials_custom(i)};
-    data_custom.time{i} = data.time{trials_custom(i)};
-end
 
-trl_single = trl(trials_single,:);
-trl_lici = trl(trials_lici,:);
-trl_icf = trl(trials_icf,:);
-trl_custom = trl(trials_custom,:);
+%%
+    cfg = [];
+    cfg.trl = trl3;
+    data = ft_redefinetrial(cfg, data);
+
+
+
 
 %% Perform ICA on segmented data
 %
-
-do_ica =0;
-for i = 1:4
-    if i ==1 && exist('data_single')
-        data = data_single;
-        do_ica = 1;
-    elseif i ==2 && exist('data_lici')
-        data = data_lici;
-        do_ica = 1;
-    elseif i ==3 && exist('data_icf')
-        data = data_icf;
-        do_ica = 1;
-    elseif i == 4 && exist('data_custom')
-        data = data_custom;
-        do_ica = 1;
-    end
-    
-    if do_ica
         cfg = [];
         cfg.demean = 'yes';
         cfg.method = 'fastica';        % FieldTrip supports multiple ways to perform ICA, 'fastica' is one of them.
@@ -634,11 +793,13 @@ for i = 1:4
         cfg           = [];
         cfg.component = 1:size(comp_tms.label,1);
         cfg.comment   = 'no';
-        cfg.layout    = 'easycapM11'; % If you use a function that requires plotting of topographical information you need to supply the function with the location of your channels
+        cfg.layout    = 'easycap_J61'; % If you use a function that requires plotting of topographical information you need to supply the function with the location of your channels
         ft_topoplotIC(cfg, comp_tms);
         
         figure;
         cfg = [];
+       
+        cfg.plotlabels = 'yes';
         cfg.viewmode = 'vertical';
         ft_databrowser(cfg, comp_tms);
         
@@ -647,7 +808,7 @@ for i = 1:4
         
         %% frequency analysis
         
-        if strcmp(result, 'yes')
+        if strcmp(result, 'y')
             cfg = [];
             cfg.polyremoval     = 1; % Removes mean and linear trend
             cfg.output          = 'pow'; % Output the powerspectrum
@@ -703,6 +864,7 @@ for i = 1:4
         % Apply original structure to segmented data, gaps will be filled with nans
         cfg     = [];
         cfg.trl = trl;
+    	
         data_tms_clean = ft_redefinetrial(cfg, data_tms_clean_segmented); % Restructure cleaned data
         
         
@@ -712,33 +874,33 @@ for i = 1:4
         %data_tms_clean = remove_nan_trial(data_tms_clean);
         
 
-%% Interpolate the data
-
-if type == 1 
-% Replacing muscle artifact with nans
-    muscle_window = [prestim cutoff]; % The window we would like to replace with nans
-    muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))]; % Find the indices in the time vector corresponding to our window of interest
-    for i=1:size(data_tms_clean.trial,2) % Loop through all trials
-      data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-    end;
-end
-
-
-      %% Interpolate the data for the second pulse
-if type ==2
-% Replacing muscle artifact with nans
-    muscle_window = [-0.002 0.035]; % The window we would like to replace with nans
-    muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))]; % Find the indices in the time vector corresponding to our window of interest
-    for i=1:size(data_tms_clean.trial,2) % Loop through all trials
-      data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-    end;
-% Replacing muscle artifact with nans
-    muscle_window = [prestim cutoff]; % The window we would like to replace with nans
-    muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))]; % Find the indices in the time vector corresponding to our window of interest
-    for i=1:size(data_tms_clean.trial,2) % Loop through all trials
-      data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-    end;
-end 
+% %% Interpolate the data
+% 
+% if do_ica==1 || do_ica ==4 || do_ica ==3
+% % Replacing muscle artifact with nans
+%     muscle_window = [prestim cutoff]; % The window we would like to replace with nans
+%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))]; % Find the indices in the time vector corresponding to our window of interest
+%     for i=1:size(data_tms_clean.trial,2) % Loop through all trials
+%       data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
+%     end;
+% end
+% 
+% 
+%       %% Interpolate the data for the second pulse
+% if do_ica == 2
+% % Replacing muscle artifact with nans
+%     muscle_window = [-0.002 0.012]; % The window we would like to replace with nans
+%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))]; % Find the indices in the time vector corresponding to our window of interest
+%     for i=1:size(data_tms_clean.trial,2) % Loop through all trials
+%       data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
+%     end;
+% % Replacing muscle artifact with nans
+%     muscle_window = [prestim cutoff]; % The window we would like to replace with nans
+%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))]; % Find the indices in the time vector corresponding to our window of interest
+%     for i=1:size(data_tms_clean.trial,2) % Loop through all trials
+%       data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
+%     end;
+% end 
 %%
 
     % Interpolate nans using cubic interpolation
@@ -750,8 +912,8 @@ end
 
   
     
-    end
-end
+    
+
 
 
     %% Filter the data
@@ -762,6 +924,8 @@ cfg.preproc.demean = 'yes';
 cfg.preproc.baselinewindow = [-0.9 -0.01];
 cfg.preproc.bpfilter = 'yes';
 cfg.preproc.bpfreq = [0.3 120];
+cfg.preproc.bsfilter = 'yes';
+cfg.preproc.bsfreq = [59 61];
 cfg.preproc.type = 'firws';
 data_filt = ft_preprocessing(cfg, data_tms_clean);
 
@@ -783,9 +947,10 @@ data_filt = ft_preprocessing(cfg, data_tms_clean);
 prompt = '\n \n Please enter a vector containing the indices of the trials to reject \n \n';
 rejectArray = input(prompt);
 
+
 cfg = [];
 cfg.artfctdef.reject = 'complete';
-cfg.artfctdef.xxx.artifact = ft_xxxReject(rejectArray, data.fsample);
+cfg.artfctdef.xxx.artifact = ft_xxxReject(data,rejectArray, data.fsample);
 
 numEpochsRmv2 = size(rejectArray,2);
 
@@ -797,7 +962,7 @@ data_tms_clean = data_filt;
 
 %% browse data
 
- cfg.preproc.demean = 'no'
+ cfg.preproc.demean = 'no';
  %cfg.layout = 'easycapM23.lay';
  ft_databrowser(cfg, data_filt);
  
@@ -810,6 +975,6 @@ chanNumEnd = size(EEG.data,1);
 
 logData( title, type, chanNumStart, chanNumEnd, numEpochs, numEpochsRmv, cutoff, numComp, numCompRmv, numEpochsRmv2)
 
-display(' \n \n Your data is now processed and in the variable ''EEG'' ');
+display(' \n \n Your data is now processed and in the variable ''EEG'' \n \n ');
 
-
+%end
