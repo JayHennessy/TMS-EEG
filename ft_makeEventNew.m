@@ -1,4 +1,4 @@
-function [ trl ] = ft_makeEventNew( cfg )
+function [ trl ] = ft_makeEventNew( cfg, type )
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -18,44 +18,43 @@ event_pos = [,];
 i = 1;
 j = 0;
 count = 1;
-offset = 4;
+offset = 6;
 
    
 while j <= size(cfg.data.trial,2)-1
     i=1;
-    while i <= size(cfg.data.trial{j+1},2)-1
-        if (abs(cfg.data.trial{j+1}(5,i))>1000)
-            if (abs(cfg.data.trial{j+1}(5,i+505))<1000) && (abs(cfg.data.trial{j+1}(5,i+60))<1000) && (abs(cfg.data.trial{j+1}(5,i+18))<1500)
+    while i <= size(cfg.data.trial{j+1},2)-511
+        if (abs(cfg.data.trial{j+1}(5,i))>2500)
+            if (max(abs(cfg.data.trial{j+1}(5,i+500:i+510)))<2000) && (max(abs(cfg.data.trial{j+1}(5,i+55:i+65)))<2000) && (min(abs(cfg.data.trial{j+1}(5,i+20:i+22)))>2000)
                 
                 event_pos(count,1) = (i-offset)+(2*j*cfg.data.fsample);
-                event_pos(count,2) = 1;
+                event_pos(count,2) = type(j+1);
                 count = count + 1;
                 i = 1;
                 break;
-            end
-            if (abs(cfg.data.trial{j+1}(5,i+505))>1000) && (abs(cfg.data.trial{j+1}(5,i+60))<1000) && (abs(cfg.data.trial{j+1}(5,i+18))<1500)
+            elseif (max(abs(cfg.data.trial{j+1}(5,i+500:i+510)))>2000) && (max(abs(cfg.data.trial{j+1}(5,i+55:i+65)))<2000) %&& (min(abs(cfg.data.trial{j+1}(5,i+20:i+22)))>2000)
                 
                 event_pos(count,1) = (i-offset)+(2*j*cfg.data.fsample);
-                event_pos(count,2) = 2;
+                event_pos(count,2) = type(j+1);
                 count = count + 1;
                 i = 1;
                 break;
-            end
-            if (abs(cfg.data.trial{j+1}(5,i+505))<1000) && (abs(cfg.data.trial{j+1}(5,i+60))>1000) && (abs(cfg.data.trial{j+1}(5,i+18))<1500)
+            elseif (max(abs(cfg.data.trial{j+1}(5,i+500:i+510)))<2000) && (max(abs(cfg.data.trial{j+1}(5,i+55:i+65)))>2000) %&& (min(abs(cfg.data.trial{j+1}(5,i+20:i+22)))>2000)
                 
                 event_pos(count,1) = (i-offset)+(2*j*cfg.data.fsample);
-                event_pos(count,2) = 3;
+                event_pos(count,2) = type(j+1);
                 count = count + 1;
                 i = 1;
                 break;
-            end
-            if (abs(cfg.data.trial{j+1}(5,i+505))<1000) && (abs(cfg.data.trial{j+1}(5,i+60))<1000) && (abs(cfg.data.trial{j+1}(5,i+20))>1500)
+            elseif (max(abs(cfg.data.trial{j+1}(5,i+500:i+510)))<2000) && (max(abs(cfg.data.trial{j+1}(5,i+55:i+65)))<2000) && (min(abs(cfg.data.trial{j+1}(5,i+20:i+22)))<2000)
                 
                 event_pos(count,1) = (i-offset)+(2*j*cfg.data.fsample);
-                event_pos(count,2) = 4;
+                event_pos(count,2) = type(j+1);
                 count = count + 1;
                 i = 1;
                 break;
+            else
+               % error(' Incorrect Event located');
             end
         end
         i = i+1;

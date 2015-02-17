@@ -83,8 +83,12 @@ prefix = file_name(1:prefix_vec(end)-1);
 suffix = file_name(prefix_vec(end)+1:end);
 
 
+hdr_name = strcat(file_name(1:end-4),'vmrk');
+
+[mrk location] = readMRK(hdr_name);
+
 addpath('C:\Users\jay\Desktop\Work\TMS-EEG');
-addpath('C:\Program Files\MATLAB\R2011a\toolbox\eeglab13_3_2b');
+addpath('C:\Program Files\MATLAB\R2011a\toolbox\eeglab13_4_4b');
 
 eeglab
 
@@ -108,7 +112,7 @@ EEG = eeg_checkset( EEG );
 
 %% make events if they arent already in the data
 
-    makeEventNew(EEG,5000);
+    j = makeEventNew(EEG,EEG.srate,mrk, location);
     EEG = pop_importevent( EEG, 'append','no','event', 'C:\Users\jay\Desktop\Work\TMS-EEG\event.txt','fields',{'latency' 'type'},'skipline',1,'timeunit',1);
     EEG = eeg_checkset( EEG );
 
@@ -130,7 +134,7 @@ numEpochs = EEG.trials;
 %real shit
 addpath('C:\Users\jay\Desktop\Work\fieldtrip-20140804');
 addpath('C:\Users\jay\Desktop\Work\fieldtrip-20140804\fileio');
-%% first we load the cfg with the data and define the trial
+    %% first we load the cfg with the data and define the trial
 %
 %  ** make sure to change the dataset when you use different data sets
 cfg = [];
@@ -163,7 +167,7 @@ if strfind(title, 'Third Practice test 17-10-2014')==37
 else
     cfg.trialdef.prestim        = 1;         % prior to event onset
     cfg.trialdef.poststim       = 1;        % after event onset
-    cfg.trl = ft_makeEventNew(cfg);
+    cfg.trl = ft_makeEventNew(cfg,mrk);
     data_set = 4;
    
 end
@@ -174,7 +178,7 @@ trl = cfg.trl;
 
 %% Display the segmented data to find bad channels
  %
- 
+ cfg.blocksize = 2;
 cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
 ft_databrowser(cfg, data);
 
@@ -209,7 +213,7 @@ else
     selchan = ft_channelselection(badChanCell, cfg.data.label);
     data = ft_selectdata(data, 'channel', selchan);  
 end
-
+        cfg.blocksize = 2;
         cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
         ft_databrowser(cfg, data);
         
@@ -297,7 +301,7 @@ trl_single = trl(trials_single,:);
     cfg_artifact_single.artfctdef.reject = 'partial';
     cfg_artifact_single.artfctdef.minaccepttim = 0.01;
     data_single = ft_rejectartifact(cfg_artifact_single, data_single);
-    
+    cfg.blocksize = 2;
     cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
     ft_databrowser(cfg, data_single);
     
@@ -389,7 +393,7 @@ trl_lici = trl(trials_lici,:);
     cfg_artifact_lici.artfctdef.reject = 'partial';
     cfg_artifact_lici.artfctdef.minaccepttim = 0.01;
     data_lici = ft_rejectartifact(cfg_artifact_lici, data_lici);
-    
+    cfg.blocksize = 2;
     cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
     ft_databrowser(cfg, data_lici);
     
@@ -450,7 +454,7 @@ trl_icf = trl(trials_icf,:);
     cfg_artifact_icf.artfctdef.reject = 'partial';
     cfg_artifact_icf.artfctdef.minaccepttim = 0.01;
     data_icf = ft_rejectartifact(cfg_artifact_icf, data_icf);
-
+    cfg.blocksize = 2;
     cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
     ft_databrowser(cfg, data_icf);
     
@@ -487,7 +491,7 @@ trl_custom = trl(trials_custom,:);
     cfg.prestim = 0;
 
     if poststim_custom == 0
-        [cutoff_custom cutinterval time] = ft_getCutoff(data_custom, cfg, type)% 1 if single pulse, 2 if double pulse
+        [cutoff_custom cutinterval time] = ft_getCutoff(data_custom, cfg, type);% 1 if single pulse, 2 if double pulse
         cfg.poststim = cutoff_custom;
     else
         
@@ -514,6 +518,7 @@ trl_custom = trl(trials_custom,:);
     cfg_artifact_custom.artfctdef.minaccepttim = 0.01;
     data_custom = ft_rejectartifact(cfg_artifact_custom, data_custom);
     
+    cfg.blocksize = 2;
     cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
     ft_databrowser(cfg, data_custom);
     
@@ -536,8 +541,8 @@ stop = exist('data_single')+exist('data_lici')+exist('data_icf')+exist('data_cus
 
 
 %******************************* for loop here **************************
-%for x = 1:stop
-    x=2;
+for x = 1:stop
+
     
     if exist('data_single') && x==1
         do_ica = 1;
@@ -652,29 +657,29 @@ else
     
     trl = trials;
 end
-% %%
-% % jump
-% cfg                    = [];
-% cfg.headerfile = file_name;
-%  
-% % channel selection, cutoff and padding
-% cfg.artfctdef.zvalue.channel    = 'EEG';
-% cfg.artfctdef.zvalue.cutoff     = 20;
-% cfg.artfctdef.zvalue.trlpadding = 0;
-% cfg.artfctdef.zvalue.artpadding = 0;
-% cfg.artfctdef.zvalue.fltpadding = 0;
-%  
-% % algorithmic parameters
-% cfg.artfctdef.zvalue.cumulative    = 'yes';
-% cfg.artfctdef.zvalue.medianfilter  = 'yes';
-% cfg.artfctdef.zvalue.medianfiltord = 9;
-% cfg.artfctdef.zvalue.absdiff       = 'yes';
-%  
-% % make the process interactive
-% cfg.artfctdef.zvalue.interactive = 'yes';
-%  
-% [cfg, artifact_jump] = ft_artifact_zvalue(cfg,data);
-% 
+%%
+% jump
+cfg                    = [];
+cfg.headerfile = file_name;
+ 
+% channel selection, cutoff and padding
+cfg.artfctdef.zvalue.channel    = 'EEG';
+cfg.artfctdef.zvalue.cutoff     = 20;
+cfg.artfctdef.zvalue.trlpadding = 0;
+cfg.artfctdef.zvalue.artpadding = 0;
+cfg.artfctdef.zvalue.fltpadding = 0;
+ 
+% algorithmic parameters
+cfg.artfctdef.zvalue.cumulative    = 'yes';
+cfg.artfctdef.zvalue.medianfilter  = 'yes';
+cfg.artfctdef.zvalue.medianfiltord = 9;
+cfg.artfctdef.zvalue.absdiff       = 'yes';
+ 
+% make the process interactive
+cfg.artfctdef.zvalue.interactive = 'yes';
+ 
+[cfg, artifact_jump] = ft_artifact_zvalue(cfg,data);
+
 % data = ft_rejectartifact(cfg, data);
 
 %% Browse data for bad epochs
@@ -688,6 +693,8 @@ prompt = ' \n \n Please enter an array containing the indices of the epochs that
 rejectArray = input(prompt);
 %% Remove bad epochs
 
+%rejectArray = cat(2, rejectArray, artifact_jump);
+%rejectArray = unique(rejectArray);
 
 cfg = [];
 cfg.artfctdef.reject = 'complete';
@@ -950,7 +957,7 @@ rejectArray = input(prompt);
 
 cfg = [];
 cfg.artfctdef.reject = 'complete';
-cfg.artfctdef.xxx.artifact = ft_xxxReject(data,rejectArray, data.fsample);
+cfg.artfctdef.xxx.artifact = ft_xxxReject(data_filt,rejectArray, data.fsample);
 
 numEpochsRmv2 = size(rejectArray,2);
 
@@ -977,4 +984,4 @@ logData( title, type, chanNumStart, chanNumEnd, numEpochs, numEpochsRmv, cutoff,
 
 display(' \n \n Your data is now processed and in the variable ''EEG'' \n \n ');
 
-%end
+end

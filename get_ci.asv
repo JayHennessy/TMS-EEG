@@ -5,12 +5,12 @@
  
 %
 % plot average of channel 5 across each different stimulation paradigm
-S = mean(EEG_S.data,3);
-P = mean(EEG_P.data,3);
-I = mean(EEG_I.data,3);
-C = mean(EEG_C.data,3);
+S = mean(EEG_S.data,3)(5,5000,6000);
+P = mean(EEG_P.data,3)(5,5500,6000);
+I = mean(EEG_I.data,3)(5,5000,6000);
+C = mean(EEG_C.data,3)(5,5000,6000);
 
-plot([0:0.0002:0.2], S(5,5000:6000),'red',[0:0.0002:0.2], P(5,5500:6500),'blue',[0:0.0002:0.2], I(5,5055:6055),'green',[0:0.0002:0.2], C(5,5010:6010),'black');
+plot([0:0.0002:0.2], mean(EEG_S.data,3)(5,5000,6000)
 
 % get the amount of cortical inhibition of each band
 [ gamma stat_g] = ci_measure(EEG_gamma_P,EEG_gamma_S,channel,' Gamma Band');
