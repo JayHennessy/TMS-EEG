@@ -70,7 +70,7 @@ elseif strcmp('icf', pulse)
     EEG_I = EEG_icf;
     %save each dataset
      cd(folder_name);
-    save(strcat(savefile,'.mat'), 'EEG_delta_I', 'EEG_theta_I', 'EEG_alpha_I', 'EEG_beta_I', 'EEG_gamma_I', 'EEG_icf');
+    save(strcat(savefile,'.mat'), 'EEG_delta_I', 'EEG_theta_I', 'EEG_alpha_I', 'EEG_beta_I', 'EEG_gamma_I', 'EEG_I');
  %   EEG_icf = pop_saveset(EEG_icf, 'filepath', 'C:\Users\jay\Desktop\Work\EEG data');
 elseif strcmp('custom', pulse)
     
@@ -92,7 +92,7 @@ elseif strcmp('custom', pulse)
     EEG_C = EEG_custom;
     %save each dataset
      cd(folder_name);
-    save(strcat(savefile,'.mat'), 'EEG_delta_C', 'EEG_theta_C', 'EEG_alpha_C', 'EEG_beta_C', 'EEG_gamma_C', 'EEG_custom');
+    save(strcat(savefile,'.mat'), 'EEG_delta_C', 'EEG_theta_C', 'EEG_alpha_C', 'EEG_beta_C', 'EEG_gamma_C', 'EEG_C');
  %   EEG_custom = pop_saveset(EEG_custom, 'filepath', 'C:\Users\jay\Desktop\Work\EEG data');
 else
 

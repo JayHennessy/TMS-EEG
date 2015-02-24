@@ -1,4 +1,4 @@
-function [ CI, stat ] = ci_measure( EEG_lici, EEG_single, channel,band)
+function [ CI, stat ] = ci_measure( EEG_lici, EEG_single, channel,band, interval,type)
 %
 %  [ CI ] = ci_measure( EEG_lici, EEG_single)
 %
@@ -11,22 +11,26 @@ function [ CI, stat ] = ci_measure( EEG_lici, EEG_single, channel,band)
 %
 
 
-% times = 6000;
-% ts = [5075:times];
-% timep = 6500;
-% tp = [5575:timep];
 
-times = 5750;
-ts = [5250:times];
-timep = 6250;
-tp = [5750:timep];
+times = [5000+interval(1)*5:5000+interval(2)*5];
+
+if strcmp(type, 'P');
+    timep = [5500+interval(1)*5:5500+interval(2)*5];
+elseif strcmp(type, 'I')
+     timep = [5500+interval(1)*5:5500+interval(2)*5];
+     elseif strcmp(type, 'I')
+     timep = [5500+interval(1)*5:5500+interval(2)*5];
+else
+    error(' type is incorrect');
+end
 
 t = [0.050:0.0002:0.15];
 %rectify the curve between 50-150 ms  post stimulus
 
 
-%EEG_px = mean(EEG_lici.data,3);
+EEG_px = mean(EEG_lici.data,3);
 EEG_sx = mean(EEG_single.data,3);
+
 
 p = abs(EEG_px);
 s = abs(EEG_sx);

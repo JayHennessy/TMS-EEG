@@ -9,7 +9,6 @@ switch do_ica
     case 1
 
 % load chanlocs.mat
-% EEG.chanlocs = chanlocs;
 %EEG.chanlocs = [];
 EEG_single.data_old =EEG.data;
 EEG_single.data =[];
@@ -30,7 +29,7 @@ for i = 1:size(data_tms_clean.trial,2)
 %     EEG.epoch(i).eventurevent = EEG.epoch2(i).eventurevent;
     
 end
-
+ EEG_single.labels = chanLabels;
 EEG_single.setname    = 'ft_data'; %data.cfg.dataset;
 % EEG.filename   = '';
 % EEG.filepath   = '';
@@ -89,7 +88,7 @@ for i = 1:size(data_tms_clean.trial,2)
 %     EEG.epoch(i).eventurevent = EEG.epoch2(i).eventurevent;
     
 end
-
+ EEG_lici.labels = chanLabels;
 EEG_lici.setname    = 'ft_data'; %data.cfg.dataset;
 % EEG.filename   = '';
 % EEG.filepath   = '';
@@ -136,6 +135,7 @@ for i = 1:size(data_tms_clean.trial,2)
     
 end
 
+ EEG_icf.labels = chanLabels;
 EEG_icf.setname    = 'ft_data'; %data.cfg.dataset;
 % EEG_icf.filename   = '';
 % EEG_icf.filepath   = '';
@@ -182,6 +182,7 @@ for i = 1:size(data_tms_clean.trial,2)
     
 end
 
+ EEG_custom.labels = chanLabels;
 EEG_custom.setname    = 'ft_data'; %data.cfg.dataset;
 % EEG_custom.filename   = '';
 % EEG_custom.filepath   = '';

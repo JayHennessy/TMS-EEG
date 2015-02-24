@@ -223,7 +223,7 @@ end
 
 %% Divide the data if it is of into its types
 
-
+chanLabels = data.labels;
 trl_2 = trl;
 
 
@@ -539,7 +539,7 @@ stop = exist('data_single')+exist('data_lici')+exist('data_icf')+exist('data_cus
 
 
 %******************************* for loop here **************************
-for x = 2:stop
+for x = 1:stop
 
     
     if exist('data_single') && x==1
@@ -1016,7 +1016,7 @@ data_tms_clean = data_filt;
 
 %% Convert back to EEGLAB
 
-fieldtrip2eeglab
+JH_fieldtrip2eeglab
 chanNumEnd = size(EEG.data,1);
 
 logData( title, type, chanNumStart, chanNumEnd, numEpochs, numEpochsRmv, cutoff, numComp, numCompRmv, numEpochsRmv2)
