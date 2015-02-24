@@ -110,14 +110,14 @@ end
 
 EEG = eeg_checkset( EEG );
 
-%% make events if they arent already in the data
+% make events if they arent already in the data
 
     j = makeEventNew(EEG,EEG.srate,mrk, location);
     EEG = pop_importevent( EEG, 'append','no','event', 'C:\Users\jay\Desktop\Work\TMS-EEG\event.txt','fields',{'latency' 'type'},'skipline',1,'timeunit',1);
     EEG = eeg_checkset( EEG );
 
 
-%% Epoch the data
+% Epoch the data
 
 
 
@@ -128,24 +128,24 @@ EEG = eeg_checkset( EEG );
 
 chanNumStart = EEG.nbchan;
 numEpochs = EEG.trials;
-%%    First make sure that you use EEGLAB to import the events and epoch the 
+%    First make sure that you use EEGLAB to import the events and epoch the 
 %     data. When that EEG file is in the workspace this should work
 % % %
 %real shit
 addpath('C:\Users\jay\Desktop\Work\fieldtrip-20140804');
 addpath('C:\Users\jay\Desktop\Work\fieldtrip-20140804\fileio');
-    %% first we load the cfg with the data and define the trial
+    % first we load the cfg with the data and define the trial
 %
 %  ** make sure to change the dataset when you use different data sets
 cfg = [];
 
 cfg.dataset = file_name;
 title = cfg.dataset;
-%%
+
 cfg.hdr = ft_read_header(cfg.dataset);
 
 
-%%
+%
 
 cfg.continuous              = 'no';
 cfg.trialdef.prestim        = 1;         % prior to event onset
@@ -178,13 +178,14 @@ trl = cfg.trl;
 
 %% Display the segmented data to find bad channels
  %
- cfg.blocksize = 2;
-cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
-ft_databrowser(cfg, data);
 
 chans = 0;
 
 while chans == 0
+    
+     cfg.blocksize = 2;
+cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
+ft_databrowser(cfg, data);
 prompt = '\n \n Please enter a cell array containing the names of the bad channels \n \n ';
 badChannels = input(prompt);
 
@@ -213,17 +214,15 @@ else
     selchan = ft_channelselection(badChanCell, cfg.data.label);
     data = ft_selectdata(data, 'channel', selchan);  
 end
-        cfg.blocksize = 2;
-        cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
-        ft_databrowser(cfg, data);
+        
         
 prompt = '\n \n Are you pleased with the result?  [1 = y / 0 = n] \n \n ';
 chans = input(prompt);
 
 end
 
-%% Divide the data if it is of type 4
-%data1
+%% Divide the data if it is of into its types
+
 
 trl_2 = trl;
 
@@ -236,7 +235,7 @@ trials_custom = find(trl(:,4)==4);
 
 
 %% set rejection markers
-%data2
+
 %type is 1 if single pulse or 2 if paired pulse
 result = 'n';
 
@@ -309,6 +308,7 @@ trl_single = trl(trials_single,:);
     result = input(prompt);
     end
 end
+
 
 result = 'n';
 if ~isempty(trials_lici)
@@ -402,7 +402,6 @@ trl_lici = trl(trials_lici,:);
      end
 end
 
-
 result = 'n';
 if ~isempty(trials_icf)
      while strcmp(result, 'n')
@@ -463,6 +462,8 @@ trl_icf = trl(trials_icf,:);
     
      end
 end
+
+
 
 result = 'n';
 if ~isempty(trials_custom)
@@ -532,16 +533,13 @@ end
  
 %% Display the segmented data including the artifacts that are gone
  %
-
- 
- % data structure is all messed up here
  
  
 stop = exist('data_single')+exist('data_lici')+exist('data_icf')+exist('data_custom');
 
 
 %******************************* for loop here **************************
-for x = 1:stop
+for x = 2:stop
 
     
     if exist('data_single') && x==1
@@ -585,7 +583,101 @@ for x = 1:stop
         
     end
     
-   
+%    %%
+% % jump
+% cfg                    = [];
+% 
+% cfg.hdr =  ft_read_header(cfg.dataset);
+%  
+% % channel selection, cutoff and padding
+% cfg.artfctdef.zvalue.channel    = 'EEG';
+% cfg.artfctdef.zvalue.cutoff     = 20;
+% cfg.artfctdef.zvalue.trlpadding = 0;
+% cfg.artfctdef.zvalue.artpadding = 0.01;
+% cfg.artfctdef.zvalue.fltpadding = 0;
+%  
+% % algorithmic parameters
+% cfg.artfctdef.zvalue.cumulative    = 'yes';
+% cfg.artfctdef.zvalue.medianfilter  = 'yes';
+% cfg.artfctdef.zvalue.medianfiltord = 9;
+% cfg.artfctdef.zvalue.absdiff       = 'yes';
+%  
+% % make the process interactive
+% cfg.artfctdef.zvalue.interactive = 'yes';
+%  
+% [cfg, artifact_jump] = ft_artifact_zvalue(cfg,data);
+% artifact_jump
+% 
+% % data = ft_rejectartifact(cfg, data);
+% %%
+% % resample data
+% cfg = [];
+% cfg.resamplefs = 1000;
+% cfg.detrend    = 'no';
+% cfg.demean = 'no';
+% data = ft_resampledata(cfg, data)
+% 
+% 
+% 
+% %%
+%   % muscle
+%   cfg            = [];
+%   %cfg.trl        = trials;
+%   cfg.headerfile = file_name;
+% 
+% 
+%   cfg.continuous = 'no';
+%  
+%   % channel selection, cutoff and padding
+%   cfg.artfctdef.zvalue.channel = 'EEG';
+%   cfg.artfctdef.zvalue.cutoff      = 4;
+%   cfg.artfctdef.zvalue.trlpadding  = 0;
+%   cfg.artfctdef.zvalue.fltpadding  = 0;
+%   cfg.artfctdef.zvalue.artpadding  = 0;
+%  
+%   % algorithmic parameters
+%   cfg.artfctdef.zvalue.bpfilter    = 'yes';
+%   cfg.artfctdef.zvalue.bpfreq      = [110 140];  %[110 140]
+%   cfg.artfctdef.zvalue.bpfiltord   = 9;
+%   cfg.artfctdef.zvalue.bpfilttype  = 'but';
+%   cfg.artfctdef.zvalue.hilbert     = 'yes';
+%   cfg.artfctdef.zvalue.boxcar      = 0.2;
+%  
+%   % make the process interactive
+%   cfg.artfctdef.zvalue.interactive = 'yes';
+%  
+%   [cfg, artifact_muscle] = ft_artifact_zvalue(cfg, data);
+%   artifact_muscle
+% 
+%   
+%   %%
+%     % EOG
+%    
+%    cfg            = [];
+%   %cfg.trl        = trials;
+%   cfg.headerfile = file_name;
+% 
+%    cfg.continuous = 'no';
+%  
+%    % channel selection, cutoff and padding
+%    cfg.artfctdef.zvalue.channel     = 'EEG';
+%    cfg.artfctdef.zvalue.cutoff      = 15;
+%    cfg.artfctdef.zvalue.trlpadding  = 0;
+%    cfg.artfctdef.zvalue.artpadding  = 0.1;
+%    cfg.artfctdef.zvalue.fltpadding  = 0;
+%  
+%    % algorithmic parameters
+%    cfg.artfctdef.zvalue.bpfilter   = 'yes';
+%    cfg.artfctdef.zvalue.bpfilttype = 'but';
+%    cfg.artfctdef.zvalue.bpfreq     = [1 15];
+%    cfg.artfctdef.zvalue.bpfiltord  = 4;
+%    cfg.artfctdef.zvalue.hilbert    = 'yes';
+%  
+%    % feedback
+%    cfg.artfctdef.zvalue.interactive = 'yes';
+%  
+%    [cfg, artifact_EOG] = ft_artifact_zvalue(cfg,data);
+  
     %% redefine the trial into original epoch sizes
     
 
@@ -657,30 +749,7 @@ else
     
     trl = trials;
 end
-%%
-% jump
-cfg                    = [];
-cfg.headerfile = file_name;
- 
-% channel selection, cutoff and padding
-cfg.artfctdef.zvalue.channel    = 'EEG';
-cfg.artfctdef.zvalue.cutoff     = 20;
-cfg.artfctdef.zvalue.trlpadding = 0;
-cfg.artfctdef.zvalue.artpadding = 0;
-cfg.artfctdef.zvalue.fltpadding = 0;
- 
-% algorithmic parameters
-cfg.artfctdef.zvalue.cumulative    = 'yes';
-cfg.artfctdef.zvalue.medianfilter  = 'yes';
-cfg.artfctdef.zvalue.medianfiltord = 9;
-cfg.artfctdef.zvalue.absdiff       = 'yes';
- 
-% make the process interactive
-cfg.artfctdef.zvalue.interactive = 'yes';
- 
-[cfg, artifact_jump] = ft_artifact_zvalue(cfg,data);
 
-% data = ft_rejectartifact(cfg, data);
 
 %% Browse data for bad epochs
 
@@ -770,7 +839,7 @@ end
     cfg.trl = trl3;
     data = ft_redefinetrial(cfg, data);
 
-
+pause(1);
 
 
 %% Perform ICA on segmented data
@@ -830,14 +899,15 @@ end
             
             tmpLabels = freq.label;
             for i = 1:size(comp_tms.label,1)
-                freq.label{i} = data.label{i};
+                freq.label{i} = comp_tms.label{i};
             end
             
             cfg = [];
-            cfg.xlim = [-1 1.0]; % Specify the time range to plot
+            cfg.xlim = [0 1.0]; % Specify the time range to plot
             cfg.zlim = [-500 500];
             cfg.layout = 'ordered';
             cfg.showlabels = 'yes';
+            cfg.interactve = 'yes';
             
             figure;
             ft_multiplotTFR(cfg, freq);
@@ -875,39 +945,8 @@ end
         data_tms_clean = ft_redefinetrial(cfg, data_tms_clean_segmented); % Restructure cleaned data
         
         
-        %*** check this out. it might go here or in the next one
-        
-        
-        %data_tms_clean = remove_nan_trial(data_tms_clean);
-        
+  
 
-% %% Interpolate the data
-% 
-% if do_ica==1 || do_ica ==4 || do_ica ==3
-% % Replacing muscle artifact with nans
-%     muscle_window = [prestim cutoff]; % The window we would like to replace with nans
-%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))]; % Find the indices in the time vector corresponding to our window of interest
-%     for i=1:size(data_tms_clean.trial,2) % Loop through all trials
-%       data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-%     end;
-% end
-% 
-% 
-%       %% Interpolate the data for the second pulse
-% if do_ica == 2
-% % Replacing muscle artifact with nans
-%     muscle_window = [-0.002 0.012]; % The window we would like to replace with nans
-%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))]; % Find the indices in the time vector corresponding to our window of interest
-%     for i=1:size(data_tms_clean.trial,2) % Loop through all trials
-%       data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-%     end;
-% % Replacing muscle artifact with nans
-%     muscle_window = [prestim cutoff]; % The window we would like to replace with nans
-%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))]; % Find the indices in the time vector corresponding to our window of interest
-%     for i=1:size(data_tms_clean.trial,2) % Loop through all trials
-%       data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-%     end;
-% end 
 %%
 
     % Interpolate nans using cubic interpolation
