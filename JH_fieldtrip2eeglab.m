@@ -30,6 +30,10 @@ for i = 1:size(data_tms_clean.trial,2)
     
 end
  EEG_single.labels = chanLabels;
+
+ for i = 1:length(chanLabels)
+     EEG_single.chanlocs(i).labels = char(chanLabels{i});
+ end
 EEG_single.setname    = 'ft_data'; %data.cfg.dataset;
 % EEG.filename   = '';
 % EEG.filepath   = '';
@@ -45,13 +49,21 @@ EEG_single.srate      = data_tms_clean.fsample;
 EEG_single.xmin       = data_tms_clean.time{1}(1);
 EEG_single.xmax       = data_tms_clean.time{1}(end);
 EEG_single.times      = data_tms_clean.time{1};
-% EEG.ref        = []; %'common';
-% EEG.event      = [];
+EEG_single.ref        = []; %'common';
+
 % EEG.epoch      = [];
-% EEG.icawinv    = [];
-% EEG.icasphere  = [];
-% EEG.icaweights = [];
-% EEG.icaact     = [];
+EEG_single.icawinv    = [];
+EEG_single.icasphere  = [];
+EEG_single.icaweights = [];
+EEG_single.icaact     = [];
+EEG_single.event      = [];
+EEG_single.specdata     = [];
+EEG_single.ect     = [];
+EEG_single.icachansind     = [];
+EEG_single.event     = [];
+EEG_single.icachans     = [];
+EEG_single.specicaact     = [];
+
 EEG_single.reject.rejmanual = 0;
 EEG_single.reject.rejmanualE = 0;
 EEG_single.reject.rejmanualcol = 0;
@@ -89,6 +101,9 @@ for i = 1:size(data_tms_clean.trial,2)
     
 end
  EEG_lici.labels = chanLabels;
+  for i = 1:length(chanLabels)
+     EEG_lici.chanlocs(i).labels = char(chanLabels{i});
+ end
 EEG_lici.setname    = 'ft_data'; %data.cfg.dataset;
 % EEG.filename   = '';
 % EEG.filepath   = '';
@@ -104,13 +119,19 @@ EEG_lici.srate      = data_tms_clean.fsample;
 EEG_lici.xmin       = data_tms_clean.time{1}(1);
 EEG_lici.xmax       = data_tms_clean.time{1}(end);
 EEG_lici.times      = data_tms_clean.time{1};
-% EEG_lici.ref        = []; %'common';
-% EEG_lici.event      = [];
+EEG_lici.ref        = []; %'common';
+EEG_lici.event      = [];
 % EEG_lici.epoch      = [];
-% EEG_lici.icawinv    = [];
-% EEG_lici.icasphere  = [];
-% EEG_lici.icaweights = [];
-% EEG_lici.icaact     = [];
+EEG_lici.icawinv    = [];
+EEG_lici.icasphere  = [];
+EEG_lici.icaweights = [];
+EEG_lici.icaact     = [];
+EEG_lici.specdata     = [];
+EEG_lici.ect     = [];
+EEG_lici.icachansind     = [];
+EEG_lici.event     = [];
+EEG_lici.icachans     = [];
+EEG_lici.specicaact     = [];
 EEG_lici.saved      = 'no';
 
     case 3
@@ -136,6 +157,9 @@ for i = 1:size(data_tms_clean.trial,2)
 end
 
  EEG_icf.labels = chanLabels;
+  for i = 1:length(chanLabels)
+     EEG_icf.chanlocs(i).labels = char(chanLabels{i});
+ end
 EEG_icf.setname    = 'ft_data'; %data.cfg.dataset;
 % EEG_icf.filename   = '';
 % EEG_icf.filepath   = '';
@@ -151,13 +175,21 @@ EEG_icf.srate      = data_tms_clean.fsample;
 EEG_icf.xmin       = data_tms_clean.time{1}(1);
 EEG_icf.xmax       = data_tms_clean.time{1}(end);
 EEG_icf.times      = data_tms_clean.time{1};
-% EEG_icf.ref        = []; %'common';
-% EEG_icf.event      = [];
+EEG_icf.ref        = []; %'common';
+EEG_icf.event      = [];
 % EEG_icf.epoch      = [];
-% EEG_icf.icawinv    = [];
-% EEG_icf.icasphere  = [];
-% EEG_icf.icaweights = [];
-% EEG_icf.icaact     = [];
+EEG_icf.icawinv    = [];
+EEG_icf.icasphere  = [];
+EEG_icf.icaweights = [];
+EEG_icf.icaact     = [];
+
+EEG_icf.event      = [];
+EEG_icf.specdata     = [];
+EEG_icf.ect     = [];
+EEG_icf.icachansind     = [];
+EEG_icf.event     = [];
+EEG_icf.icachans     = [];
+EEG_icf.specicaact     = [];
 EEG_icf.saved      = 'no';
 
     case 4
@@ -183,6 +215,9 @@ for i = 1:size(data_tms_clean.trial,2)
 end
 
  EEG_custom.labels = chanLabels;
+  for i = 1:length(chanLabels)
+     EEG_custom.chanlocs(i).labels = char(chanLabels{i});
+ end
 EEG_custom.setname    = 'ft_data'; %data.cfg.dataset;
 % EEG_custom.filename   = '';
 % EEG_custom.filepath   = '';
@@ -198,13 +233,21 @@ EEG_custom.srate      = data_tms_clean.fsample;
 EEG_custom.xmin       = data_tms_clean.time{1}(1);
 EEG_custom.xmax       = data_tms_clean.time{1}(end);
 EEG_custom.times      = data_tms_clean.time{1};
-% EEG_custom.ref        = []; %'common';
-% EEG_custom.event      = [];
+EEG_custom.ref        = []; %'common';
+EEG_custom.event      = [];
 % EEG_custom.epoch      = [];
-% EEG_custom.icawinv    = [];
-% EEG_custom.icasphere  = [];
-% EEG_custom.icaweights = [];
-% EEG_custom.icaact     = [];
+EEG_custom.icawinv    = [];
+EEG_custom.icasphere  = [];
+EEG_custom.icaweights = [];
+EEG_custom.icaact     = [];
+
+EEG_custom.event      = [];
+EEG_custom.specdata     = [];
+EEG_custom.ect     = [];
+EEG_custom.icachansind     = [];
+EEG_custom.event     = [];
+EEG_custom.icachans     = [];
+EEG_custom.specicaact     = [];
 EEG_custom.saved      = 'no';
 
 end

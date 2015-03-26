@@ -55,7 +55,7 @@ switch result
         file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_single_35_ref_and_ground_nose.vhdr';
     case 14
         prompt = sprintf([' \n Please enter the path of the ".vhdr" file you would like to process. \n \n ']);
-        file_name = input(prompt);
+        file_name = input(prompt,'s');
         prompt = sprintf([' \n \n Please type the number of the file type you would like to process: \n \n \n' ...
             ' 1  Single Pulse \n' ...
             ' 2  Double Pulse \n' ...
@@ -85,6 +85,20 @@ suffix = file_name(prefix_vec(end)+1:end);
 
 hdr_name = strcat(file_name(1:end-4),'vmrk');
 
+%find if DLPFC or M1
+if findstr('DLPFC', hdr_name)>0
+    channel = 3;                    % this might need revision because a channel could get deleted that would change the channel number later on.
+else
+    channel  =5;
+end
+
+%channel file
+chan_file = strcat(prefix(1:prefix_vec(end-1)),'Exported Electrodes.sfp');
+if exist(chan_file,'file') ==2 
+    elec = ft_read_sens(chan_file);
+end
+
+
 [mrk location] = readMRK(hdr_name);
 
 addpath('C:\Users\jay\Desktop\Work\TMS-EEG');
@@ -98,34 +112,38 @@ EEG = eeg_checkset( EEG );
 
 %choose channel file
 
-if EEG.nbchan == 30
-    EEG=pop_chanedit(EEG, 'load',{'C:\Users\jay\Desktop\Work\channels\jay_good_channels_30.ced' 'filetype' 'autodetect'});
-elseif EEG.nbchan == 32
-    EEG=pop_chanedit(EEG, 'load',{'C:\Users\jay\Desktop\Work\channels\jay_good_channels.ced' 'filetype' 'autodetect'},'delete',32);
-elseif EEG.nbchan >= 60
-    %maybe figure out how to get the channel here
-else
-    error('you messed up the channels');
+
+if exist(chan_file,'file') ==2 
+EEG=pop_chanedit(EEG, 'load',{chan_file 'filetype' 'autodetect'});
 end
 
-EEG = eeg_checkset( EEG );
-
+%%
 % make events if they arent already in the data
+eeg_temp = EEG;
 
-    j = makeEventNew(EEG,EEG.srate,mrk, location);
-    EEG = pop_importevent( EEG, 'append','no','event', 'C:\Users\jay\Desktop\Work\TMS-EEG\event.txt','fields',{'latency' 'type'},'skipline',1,'timeunit',1);
-    EEG = eeg_checkset( EEG );
+     [j wrong w val] = makeEventNew(EEG,EEG.srate,mrk, location,channel);
+     EEG = pop_importevent( EEG, 'append','no','event', 'C:\Users\jay\Desktop\Work\TMS-EEG\event.txt','fields',{'latency' 'type'},'skipline',1,'timeunit',1);
+     EEG = eeg_checkset( EEG );
+
+ ind = 1;
+for i = 1:length(mrk)
+    if ~any(w==i)
+        mrk(ind) = mrk(i);
+        location(ind) = location(i);
+        ind = ind+1;
+    end
+end
 
 
 % Epoch the data
 
 
 
-EEG = pop_epoch( EEG, {  'S 1' 'S 2' 'S 3' 'S1' 'S2' 'S3' 'S4' 'S 4' }, [-1  1], 'newname', 'single epochs', 'epochinfo', 'yes');
+EEG = pop_epoch( EEG, {  'S  1' 'S  2' 'S  3' 'S1' 'S2' 'S3' 'S4' 'S  4' }, [-1  1], 'newname', 'single epochs', 'epochinfo', 'yes');
 EEG = eeg_checkset( EEG );
 EEG = pop_rmbase( EEG, [-900     -50]);
 EEG = eeg_checkset( EEG );
-
+%%
 chanNumStart = EEG.nbchan;
 numEpochs = EEG.trials;
 %    First make sure that you use EEGLAB to import the events and epoch the 
@@ -151,12 +169,12 @@ cfg.continuous              = 'no';
 cfg.trialdef.prestim        = 1;         % prior to event onset
 cfg.trialdef.poststim       = 1;        % after event onset
 cfg.trialdef.eventtype      = 'stimulus'; % see above
-cfg.trialdef.eventvalue     = {'S1' 'S2' 'S3' 'S4' 'S 1' 'S 2' 'S 3' 'S 4'} ;
+cfg.trialdef.eventvalue     = {'S1' 'S2' 'S3' 'S4' 'S  1' 'S  2' 'S  3' 'S  4'} ;
 
-%     Change this when not doing field trip example
+
 cfg.data = eeglab2fieldtrip(EEG, 'preprocessing', 'none');
 data = cfg.data;
-
+%%
     
 
 if strfind(title, 'Third Practice test 17-10-2014')==37
@@ -167,13 +185,25 @@ if strfind(title, 'Third Practice test 17-10-2014')==37
 else
     cfg.trialdef.prestim        = 1;         % prior to event onset
     cfg.trialdef.poststim       = 1;        % after event onset
-    cfg.trl = ft_makeEventNew(cfg,mrk);
+    cfg.trl = ft_makeEventNew(cfg,mrk,channel);
     data_set = 4;
    
 end
-
+%%
 cfg = ft_definetrial(cfg);
 trl = cfg.trl;
+
+% fix BESA chan locs
+
+% for i = 1:length(EEG.chanlocs)
+% temp_pos(i,:) = elec.chanpos(i+3,:);
+% temp_elec(i,:) = elec.elecpos(i+3,:);
+% temp_label{i} = elec.label{i+3};
+% end
+% 
+% data.elec.chanpos = temp_pos;
+% data.elec.elecpos = temp_elec;
+% data.elec.label = temp_label;
 
 
 %% Display the segmented data to find bad channels
@@ -182,10 +212,10 @@ trl = cfg.trl;
 chans = 0;
 
 while chans == 0
-    
-     cfg.blocksize = 2;
-cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
-ft_databrowser(cfg, data);
+
+         cfg.blocksize = 2;
+    cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
+    ft_databrowser(cfg, data);
 prompt = '\n \n Please enter a cell array containing the names of the bad channels \n \n ';
 badChannels = input(prompt);
 
@@ -215,15 +245,21 @@ else
     data = ft_selectdata(data, 'channel', selchan);  
 end
         
-        
+cfg.blocksize = 2;
+cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
+ft_databrowser(cfg, data);   
 prompt = '\n \n Are you pleased with the result?  [1 = y / 0 = n] \n \n ';
 chans = input(prompt);
 
 end
 
+%remove channels from the lay file
+
+
+
 %% Divide the data if it is of into its types
 
-chanLabels = data.labels;
+chanLabels = data.label;
 trl_2 = trl;
 
 
@@ -305,7 +341,7 @@ trl_single = trl(trials_single,:);
     ft_databrowser(cfg, data_single);
     
     prompt = '\n \n Is the cut-off at an acceptable latency?     [y/n] \n \n ';
-    result = input(prompt);
+    result = input(prompt,'s');
     end
 end
 
@@ -378,7 +414,7 @@ trl_lici = trl(trials_lici,:);
     cfg.method = 'marker';
     cfg.prestim = 0.002;
     
-    cfg.poststim = 0.012;
+    cfg.poststim = 0.020;
     cfg.Fs = 5000;
     cfg.trialdef.eventtype  = 'S2';
     cfg.trialdef.eventvalue = 'S2';
@@ -398,7 +434,7 @@ trl_lici = trl(trials_lici,:);
     ft_databrowser(cfg, data_lici);
     
     prompt = '\n \n Is the cut-off at an acceptable latency?     [y/n] \n \n ';
-    result = input(prompt);
+    result = input(prompt,'s');
      end
 end
 
@@ -458,7 +494,7 @@ trl_icf = trl(trials_icf,:);
     ft_databrowser(cfg, data_icf);
     
     prompt = '\n \n Is the cut-off at an acceptable latency?     [y/n] \n \n ';
-    result = input(prompt);
+    result = input(prompt,'s');
     
      end
 end
@@ -524,7 +560,7 @@ trl_custom = trl(trials_custom,:);
     ft_databrowser(cfg, data_custom);
     
     prompt = '\n \n Is the cut-off at an acceptable latency?     [y/n] \n \n ';
-    result = input(prompt);
+    result = input(prompt,'s');
      end
 end
     
@@ -541,7 +577,6 @@ stop = exist('data_single')+exist('data_lici')+exist('data_icf')+exist('data_cus
 %******************************* for loop here **************************
 for x = 1:stop
 
-    
     if exist('data_single') && x==1
         do_ica = 1;
         trials = trl_single;
@@ -869,7 +904,13 @@ pause(1);
         cfg           = [];
         cfg.component = 1:size(comp_tms.label,1);
         cfg.comment   = 'no';
-        cfg.layout    = 'easycap_J61'; % If you use a function that requires plotting of topographical information you need to supply the function with the location of your channels
+        
+        % Need to figure out how to use the proper channel locations
+%         if ~exist('elec')  
+            cfg.layout    = 'easycap_J61'; % If you use a function that requires plotting of topographical information you need to supply the function with the location of your channels
+%         else
+%             comp_tms.elec = data.elec;
+%         end
         ft_topoplotIC(cfg, comp_tms);
         
         figure;
@@ -880,7 +921,7 @@ pause(1);
         ft_databrowser(cfg, comp_tms);
         
         prompt = '\n \n Would you like to see the frequency analysis? \n \n';
-        result = input(prompt);
+        result = input(prompt,'s');
         
         %% frequency analysis
         
@@ -890,7 +931,7 @@ pause(1);
             cfg.output          = 'pow'; % Output the powerspectrum
             cfg.method          = 'mtmconvol';
             cfg.taper           = 'hanning';
-            cfg.foi             = 1:30; % Our frequencies of interest. Now: 1 to 50, in steps of 1.
+            cfg.foi             = 1:3:69; % Our frequencies of interest. Now: 1 to 50, in steps of 1.
             cfg.t_ftimwin       = 0.3.*ones(1,numel(cfg.foi));
             cfg.toi             = -0.5:0.05:1.5;
             

@@ -30,13 +30,18 @@ end
 % locate the position of the comma's that delimit the different marker data
 comma = strfind(mrk,',');
 
-type = zeros(1,size(comma,2));
-location = zeros(1,size(comma,2));
 
 % Find the actual type of marker and its location
-for j = 1:size(comma,2)
-    type(j) = str2double(mrk{j}(comma{j}(1)+4));
-    location(j) = str2double(mrk{j}(comma{j}(2)+1:comma{j}(3)-1));
+j=1;
+c=1;
+while j<=size(comma,2)
+    if strcmp(mrk{j}(comma{j}(1)+1),'S')
+        type(c) = str2double(mrk{j}(comma{j}(1)+4));
+        location(c) = str2double(mrk{j}(comma{j}(2)+1:comma{j}(3)-1));
+        c=c+1;
+    end
+    j = j+1;
+    
 end
 
 type = type';

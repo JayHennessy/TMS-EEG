@@ -15,7 +15,9 @@ function [ CI, stat ] = ci_measure( EEG_lici, EEG_single, channel,band, interval
 times = [5000+interval(1)*5:5000+interval(2)*5];
 
 if strcmp(type, 'P');
+    
     timep = [5500+interval(1)*5:5500+interval(2)*5];
+    
 elseif strcmp(type, 'I')
      timep = [5055+interval(1)*5:5055+interval(2)*5];
    elseif strcmp(type, 'C')
@@ -34,6 +36,9 @@ EEG_sx = mean(EEG_single.data,3);
 
 p = abs(EEG_px);
 s = abs(EEG_sx);
+
+
+
 
 EEG_p = p(channel, timep);
 EEG_s = s(channel, times);

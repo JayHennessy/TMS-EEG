@@ -1,30 +1,43 @@
-function [ j ] = makeEventNew( EEG,Fs,type,location )
+function [ loc wrong w val] = makeEventNew( EEG,Fs,type,location ,channel)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
 
-count = 1;
+count = length(type);
 event_channel = [];
 event_pos = [];
-wrong = 0;
+wrong = 1;
 j =1;
-
-while j <= length(type);
-    i = location(j)-50;
-    while i <= size(EEG.data,2)-510
+w=0;
+offset = 6;
+loc = 1;
+while j <= count;
+    i = location(j)-100;
+    while i <= location(j)+6000
         
         %Check for single pulse
-        if (abs(EEG.data(5,i))>2500)
-            
-            
-            event_pos(j ,1) = i -6;
-            event_pos(j,2) = type(j);
+        if (abs(EEG.data(channel,i))>2000)
+            val = EEG.data(channel,i);
+            event_pos(loc ,1) = i -offset;
+            event_pos(loc,2) = type(j);
             break;
+        end
+        if i > location(j)+5000
+            loc = loc -1;
+            w(wrong) = j;
+            wrong = wrong+1;
+            
+           % count = count+1;
+            break;
+        
         end
         i = i+1;
     end
+    loc = loc +1;
     j = j+1;
 end
+
+
 
 ft_sampleinfo_var = zeros(2,size(event_pos,2));
 
