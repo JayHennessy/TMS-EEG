@@ -1,79 +1,9 @@
 %% This is the EEGLAB
 
-prompt = sprintf([' \n \n Please type the number of the file you would like to process: \n \n \n' ...
-    ' 1  \\/Work\\/Fieldtrip Example data\\/jimher_toolkit_demo_dataset_.vhdr \n' ...
-    ' 2  \\Work\\/EEG_Tests\\/Second Practice test 02-07-2014\\/Pilot2_pairedpulse_LeftM1_45.vhdr \n' ...
-    ' 3  \\Work\\/EEG_Tests\\/Second Practice test 02-07-2014\\/Pilot2_singlepulse_LeftM1_45.vhdr \n' ...
-    ' 4  \\Work\\/EEG_Tests\\/Giovanni test 03-06-2014\\/singlepulse_52.vhdr ' ...
-    ' \n 5  \\/Work\\/EEG_Tests\\/Giovanni test 03-06-2014\\/lici100.vhdr ' ...
-    ' \n 7  \\/Work\\/EEG_Tests\\/Second Practice test 02-07-2014\\/ramp_leftM!_100.vhdr ' ...
-    ' \n 8  \\/Work\\/EEG_Tests\\/Second Practice test 02-07-2014\\/ramp_leftM!_140.vhdr ' ...
-    ' \n 9  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_35_singlepulse.vhdr ' ...
-    ' \n 10  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_48_singleandLICI_LeftM1.vhdr'  ...
-    ' \n 11  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_47_LICI_leftM1.vhdr ' ...
-    ' \n 12  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_single35_refnose.vhdr' ...
-    ' \n 13  \\/Work\\/EEG_Tests\\/Third Practice test 17-10-2014\\/Jay_single_35_ref_and_ground_nose.vhdr' ...
-    ' \n 14  This will let you enter the path of a new file \n \n ']);
+  
+prompt = sprintf([' \n Please enter the path of the ".vhdr" file you would like to process. \n \n ']);
+file_name = input(prompt,'s');
 
-
-result = input(prompt);
-
-if ismember(result, [ 1 3 4 6 7 8 9 10 12 13])
-    type = 1;
-elseif ismember(result, [2 5 11])
-    type = 2;
-elseif ismember(result, [14])
-    type = 0;
-end
-
-switch result
-    case 1
-        file_name = 'C:\Users\jay\Desktop\Work\Fieldtrip Example data\jimher_toolkit_demo_dataset_.vhdr';
-    case 2
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Second Practice test 02-07-2014\Pilot2_pairedpulse_LeftM1_45.vhdr';
-    case 3
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Second Practice test 02-07-2014\Pilot2_singlepulse_LeftM1_45.vhdr';
-    case 4
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Giovanni test 03-06-2014\singlepulse_52.vhdr';
-    case 5
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Giovanni test 03-06-2014\lici100.vhdr';
-    case 6
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Second Practice test 02-07-2014\ramp_leftM!_80.vhdr';
-    case 7
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Second Practice test 02-07-2014\ramp_leftM!_100.vhdr';
-    case 8
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Second Practice test 02-07-2014\ramp_leftM!_140.vhdr';
-    case 9
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_35_singlepulse.vhdr';
-    case 10
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_48_singleandLICI_LeftM1.vhdr';
-    case 11
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_47_LICI_leftM1.vhdr';
-    case 12
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_single35_refnose.vhdr';
-    case 13
-        file_name = 'C:\Users\jay\Desktop\Work\EEG_Tests\Third Practice test 17-10-2014\Jay_single_35_ref_and_ground_nose.vhdr';
-    case 14
-        prompt = sprintf([' \n Please enter the path of the ".vhdr" file you would like to process. \n \n ']);
-        file_name = input(prompt,'s');
-        prompt = sprintf([' \n \n Please type the number of the file type you would like to process: \n \n \n' ...
-            ' 1  Single Pulse \n' ...
-            ' 2  Double Pulse \n' ...
-            ' 3  ICF Pulse' ...
-            ' \n 4  mix  \n \n ']);
-        type = input(prompt);
-        
-        if ismember(type, [ 1 ])
-            type = 1;
-        elseif ismember(type, [2 ])
-            type = 2;
-        elseif ismember(type, [3])
-            type = 3;
-        elseif ismember(type, [4])
-            type = 4;
-        end
-        
-end
 
 prefix_vec = strfind(file_name, '\');
 if isempty(prefix_vec)
@@ -153,8 +83,7 @@ numEpochs = EEG.trials;
 addpath('C:\Users\jay\Desktop\Work\fieldtrip-20140804');
 addpath('C:\Users\jay\Desktop\Work\fieldtrip-20140804\fileio');
     % first we load the cfg with the data and define the trial
-%
-%  ** make sure to change the dataset when you use different data sets
+
 cfg = [];
 
 cfg.dataset = file_name;
@@ -208,32 +137,23 @@ trl = cfg.trl;
 
 %% Display the segmented data to find bad channels
  %
+ 
+ 
 
 chans = 0;
 
 while chans == 0
 
-         cfg.blocksize = 2;
+    cfg.blocksize = 2;
     cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
     ft_databrowser(cfg, data);
-prompt = '\n \n Please enter a cell array containing the names of the bad channels \n \n ';
-badChannels = input(prompt);
+    prompt = '\n \n Please enter a cell array containing the names of the bad channels \n \n ';
+    badChannels = input(prompt);
 
 %% REMOVE BAD CHANNELS
 % 
-%  ** not that these channels have to be changed. Probably easiest to see
-%  in eeglab
 
-if data_set == 1
-    selchan = ft_channelselection({'all' '-T7' '-TP10' '-FC1' '-EMG1' '-EMG2'}, cfg.data.label);
-    data = ft_selectdata(data, 'channel', selchan);
-elseif data_set ==2
-    selchan = ft_channelselection({'all' '-F3' '-TP9' }, cfg.data.label);
-    data = ft_selectdata(data, 'channel', selchan);
-elseif data_set == 0
-    selchan = ft_channelselection({'all' '-FC1' '-Fz' }, cfg.data.label);
-    data = ft_selectdata(data, 'channel', selchan); 
-else
+
     badChanCell = cell(1,size(badChannels,2)+1);
     badChanCell{1} = 'all';
     for i = 1:size(badChannels,2)
@@ -243,7 +163,7 @@ else
     
     selchan = ft_channelselection(badChanCell, cfg.data.label);
     data = ft_selectdata(data, 'channel', selchan);  
-end
+
         
 cfg.blocksize = 2;
 cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
@@ -884,6 +804,10 @@ pause(1);
         cfg.method = 'fastica';        % FieldTrip supports multiple ways to perform ICA, 'fastica' is one of them.
         cfg.fastica.approach = 'symm'; % All components will be estimated simultaneously.
         cfg.fastica.g = 'gauss';
+        if do_ica ==2
+            cfg.trials = [3:3:length(data.trial)];
+        end
+        
         
         comp_tms = ft_componentanalysis(cfg, data);
         
@@ -920,12 +844,11 @@ pause(1);
         cfg.viewmode = 'vertical';
         ft_databrowser(cfg, comp_tms);
         
-        prompt = '\n \n Would you like to see the frequency analysis? \n \n';
-        result = input(prompt,'s');
+        
         
         %% frequency analysis
         
-        if strcmp(result, 'y')
+     
             cfg = [];
             cfg.polyremoval     = 1; % Removes mean and linear trend
             cfg.output          = 'pow'; % Output the powerspectrum
@@ -933,7 +856,9 @@ pause(1);
             cfg.taper           = 'hanning';
             cfg.foi             = 1:3:69; % Our frequencies of interest. Now: 1 to 50, in steps of 1.
             cfg.t_ftimwin       = 0.3.*ones(1,numel(cfg.foi));
-            cfg.toi             = -0.5:0.05:1.5;
+            %cfg.toi             = -0.5:0.05:1.5;
+             cfg.toi             = 0:0.0002:0.8932;
+
             
             freq         = ft_freqanalysis(cfg, comp_tms);
             
@@ -953,7 +878,7 @@ pause(1);
             figure;
             ft_multiplotTFR(cfg, freq);
             
-        end
+        
         %% Use unmixing matrix to get original data back to remove components
         
         cfg          = [];
