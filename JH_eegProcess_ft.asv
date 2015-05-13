@@ -318,7 +318,7 @@ trl_lici = trl(trials_lici,:);
     cfg.trialdef.eventvalue = 'S2';
     
         cfg.trials = trials_lici;
-    
+    end
     cfg.trialfun = 'ft_markpulse';
     [cfg_artifact_lici, artifact_lici] = ft_artifact_tms(cfg, data_lici);
     
@@ -338,9 +338,9 @@ trl_lici = trl(trials_lici,:);
     cfg.Fs = 5000;
     cfg.trialdef.eventtype  = 'S2';
     cfg.trialdef.eventvalue = 'S2';
-   
+    if type == 4
         cfg.trials = trials_lici;
-   
+    end
     cfg.type = 2;
     cfg.trialfun = 'ft_markpulse';
     [cfg_artifact_lici, artifact_lici] = ft_artifact_tms(cfg, data_lici);
@@ -398,9 +398,9 @@ trl_icf = trl(trials_icf,:);
     cfg.trialdef.eventvalue     = {'S1'} ;
     %cfg.trialdef.eventtype  = 'p-pulse';
     %cfg.trialdef.eventvalue = 1000;
-    
+    if type == 4
         cfg.trials = trials_icf;
-   
+    end
     cfg.trialfun = 'ft_markpulse';
     
     [cfg_artifact_icf, artifact_icf] = ft_artifact_tms(cfg, data_icf);
@@ -463,9 +463,9 @@ trl_custom = trl(trials_custom,:);
     cfg.trialdef.eventvalue     = {'S1'} ;
     %cfg.trialdef.eventtype  = 'p-pulse';
     %cfg.trialdef.eventvalue = 1000;
-
+    if type == 4
         cfg.trials = trials_custom;
-   
+    end
     cfg.trialfun = 'ft_markpulse';
     
     [cfg_artifact_custom, artifact_custom] = ft_artifact_tms(cfg, data_custom);
@@ -985,7 +985,7 @@ data_tms_clean = data_filt;
 JH_fieldtrip2eeglab
 chanNumEnd = size(EEG.data,1);
 
-logData( title, chanNumStart, chanNumEnd, numEpochs, numEpochsRmv, cutoff, numComp, numCompRmv, numEpochsRmv2)
+logData( title, type, chanNumStart, chanNumEnd, numEpochs, numEpochsRmv, cutoff, numComp, numCompRmv, numEpochsRmv2)
 
 display(' \n \n Your data is now processed and in the variable ''EEG'' \n \n ');
 
