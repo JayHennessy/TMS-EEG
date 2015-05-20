@@ -1,11 +1,25 @@
 addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507'
 addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507/utilities'
 addpath '/Users/jay/Desktop/Work/EEG_tests/s13'   % make this which ever path leads to the data being processed
+fileName = '1501_s13_M1.eeg';
 
-triggers = {'S  1','S  2', 'S  3','S  4'}; % These values correspond to the markers placed in this dataset
+prompt = '/n Please define the pulse paradigme to be analyzed (1, 2, 3, 4) . /n/n';
+pulseType = input(prompt);
+
+switch pulseType
+    case 1
+        triggers = {'S 1'};
+    case 2
+        triggers = {'S 2'};
+    case 3
+        triggers = {'S 3'};
+    case 4
+        triggers = {'S 4'};
+end
+
  
 cfg = [];
-cfg.dataset                 = '1501_s13_M1.eeg';
+cfg.dataset                 = fileName;
 cfg.continuous              = 'yes';
 cfg.trialdef.prestim        = .5;         % prior to event onset
 cfg.trialdef.poststim       = 1.5;        % after event onset
@@ -18,25 +32,71 @@ trl = cfg.trl;
 cfg.channel = {'all' '-FC6' '-POz' '-CPz'}; % indicate the channels we would like to read and/or exclude.
 cfg.reref = 'yes';        % We want to rereference our data
 cfg.refchannel = {'all'}; % Here we specify our reference channels
-cfg.implicitref = '52';    % Here we can specify the name of the implicit reference electrode used during the acquisition
+cfg.implicitref = 'FCz';    % Here we can specify the name of the implicit reference electrode used during the acquisition
  
 data_tms_raw = ft_preprocessing(cfg);
 
 %look at data, here you can identify eye blinks, or wait for ICA
+
 cfg = [];
 cfg.preproc.demean = 'yes';
 cfg.preproc.baselinewindow = [-0.1 -0.001];
 ft_databrowser(cfg, data_tms_raw);
 
+chans = 0;
+
+while chans == 0
+
+    cfg.blocksize = 2;
+    cfg.continuous = 'no';
+    ft_databrowser(cfg, data_tms_raw);
+    prompt = '\n \n Please enter a cell array containing the names of the bad channels \n \n ';
+    badChannels = input(prompt);
+
+
+
+    badChanCell = cell(1,size(badChannels,2)+1);
+    badChanCell{1} = 'all';
+    for i = 1:size(badChannels,2)
+        x = i+1;
+        badChanCell{x} = strcat('-',badChannels{i});
+    end
+    
+    selchan = ft_channelselection(badChanCell, data_tms_raw.label);
+    data_tms_raw = ft_selectdata(data_tms_raw, 'channel', selchan);  
+
+        
+cfg.blocksize = 2;
+cfg.demean = 'yes';
+cfg.continuous = 'no'; 
+ft_databrowser(cfg, data_tms_raw);   
+prompt = '\n \n Are you pleased with the result?  [1 = y / 0 = n] \n \n ';
+chans = input(prompt);
+
+end
+
+
+
+prompt = '/n Please enter the bad trials. /n/n';
+badTrials = input(prompt);
+
 % Make an average to easily identify TMS pulse
+
 cfg = [];
 cfg.preproc.demean = 'yes';
 cfg.preproc.baselinewindow = [-0.1 -0.001];
+ data_tms_avg = ft_timelockanalysis(cfg, data_tms_raw);
  
-data_tms_avg = ft_timelockanalysis(cfg, data_tms_raw);
+cfg = [];
+cfg.preproc.demean = 'yes';
+cfg.preproc.baselinewindow = [-0.1 -0.001];
+ft_databrowser(cfg, data_tms_avg);
 
 % here we can clear data_tms_raw (note: it should be saved earlier)
 clear data_tms_raw;
+
+prompt = '/n At what latency should the TMS artifact be cut? (usually ~10ms) /n/n';
+latency = input(prompt);
 
 %identify TMS artifact
 
@@ -44,9 +104,9 @@ clear data_tms_raw;
 trigger = {'S  1'};              % Markers in data that reflect TMS-pulse onset
 cfg                         = [];
 cfg.method                  = 'marker'; % The alternative is 'detect' to detect the onset of pulses
-cfg.dataset                 = '1501_s13_M1.eeg';
+cfg.dataset                 = fileName;
 cfg.prestim                 = 0;     % First time-point of range to exclude
-cfg.poststim                = .011;     % Last time-point of range to exclude
+cfg.poststim                = latency;     % Last time-point of range to exclude
 cfg.trialdef.eventtype      = 'Stimulus';
 cfg.trialdef.eventvalue     = trigger ;
 cfg_ringing_s1 = ft_artifact_tms(cfg);     % Detect TMS artifacts
@@ -55,7 +115,7 @@ cfg_ringing_s1 = ft_artifact_tms(cfg);     % Detect TMS artifacts
 trigger = {'S  2'};
 cfg.trialdef.eventvalue     = trigger ;
 cfg.prestim   = -0.1; 
-cfg.poststim  = .111;
+cfg.poststim  = latency+0.1;
 cfg_ringing_s2  = ft_artifact_tms(cfg); % Detect TMS artifacts 
 
 trigger = {'S  2'};
@@ -67,18 +127,18 @@ cfg_ringing_s2_a  = ft_artifact_tms(cfg); % Detect TMS artifacts
 trigger = {'S  3'};
 cfg.trialdef.eventvalue     = trigger ;
 cfg.prestim   = 0; 
-cfg.poststim  = .023;
+cfg.poststim  = latency+0.011;
 cfg_ringing_s3  = ft_artifact_tms(cfg); % Detect TMS artifacts 
 
 trigger = {'S  4'};
 cfg.trialdef.eventvalue     = trigger ;
 cfg.prestim   = 0; 
-cfg.poststim  = .012;
+cfg.poststim  = latency+0.001;
 cfg_ringing_s4  = ft_artifact_tms(cfg); % Detect TMS artifacts
 
 % Combine into one structure
 cfg_artifact = [];
-cfg_artifact.dataset = '1501_s13_M1.eeg';
+cfg_artifact.dataset = fileName;
 cfg_artifact.artfctdef.ringing.artifact = vertcat(cfg_ringing_s1.artfctdef.tms.artifact,cfg_ringing_s2.artfctdef.tms.artifact,cfg_ringing_s3.artfctdef.tms.artifact,cfg_ringing_s4.artfctdef.tms.artifact); % Add ringing/step response artifact definition
 
 
@@ -101,14 +161,14 @@ cfg = ft_rejectartifact(cfg_artifact); % Reject trials partially
 cfg.channel = {'all' '-FC6' '-POz' '-CPz'};
 cfg.reref       = 'yes';
 cfg.refchannel  = {'all'};
-cfg.implicitref = '52';
+cfg.implicitref = 'FCz';
 data_tms_segmented  = ft_preprocessing(cfg);
 
 % Browse data without artifacts
 
 cfg = [];
 cfg.artfctdef = cfg_artifact.artfctdef; % Store previously obtained artifact definition
-cfg.continuous = 'yes'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
+cfg.continuous = 'no'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
 ft_databrowser(cfg, data_tms_segmented);
 
 % resample into new data structure
@@ -167,9 +227,13 @@ cfg.topolabel = comp_tms.topolabel; % Supply the original channel label informat
  
 comp_tms          = ft_componentanalysis(cfg, data_tms_segmented);
 
+
+prompt = sprintf('/n Please enter the bad trials. /n/n');
+badComps = input(prompt)
+
 %remove compoenents
 cfg            = [];
-cfg.component  = [ 41 56 7 33 1 25 52 37 49 50 31];  %******** these components have to be chosen
+cfg.component  = badComps;  %******** these components have to be chosen
 cfg.demean     = 'no';
  
 data_tms_clean_segmented = ft_rejectcomponent(cfg, comp_tms);
