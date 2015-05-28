@@ -17,7 +17,7 @@ switch pulseType
         triggers = {'S  4'};
 end
 
- 
+
 cfg = [];
 cfg.dataset                 = fileName;
 cfg.continuous              = 'yes';
@@ -33,7 +33,7 @@ cfg.channel = {'all' '-FC6' '-POz' '-CPz'}; % indicate the channels we would lik
 cfg.reref = 'yes';        % We want to rereference our data
 cfg.refchannel = {'all'}; % Here we specify our reference channels
 cfg.implicitref = 'FCz';    % Here we can specify the name of the implicit reference electrode used during the acquisition
- 
+
 data_tms_raw = ft_preprocessing(cfg);
 
 %look at data, here you can identify eye blinks, or wait for ICA
@@ -46,15 +46,15 @@ ft_databrowser(cfg, data_tms_raw);
 chans = 0;
 
 while chans == 0
-
+    
     cfg.blocksize = 2;
     cfg.continuous = 'no';
     ft_databrowser(cfg, data_tms_raw);
     prompt = '\n \n Please enter a cell array containing the names of the bad channels \n \n ';
     badChannels = input(prompt);
-
-
-
+    
+    
+    
     badChanCell = cell(1,size(badChannels,2)+1);
     badChanCell{1} = 'all';
     for i = 1:size(badChannels,2)
@@ -63,43 +63,28 @@ while chans == 0
     end
     
     selchan = ft_channelselection(badChanCell, data_tms_raw.label);
-    data_tms_raw = ft_selectdata(data_tms_raw, 'channel', selchan);  
-
-        
-cfg.blocksize = 2;
-cfg.demean = 'yes';
-cfg.continuous = 'no'; 
-ft_databrowser(cfg, data_tms_raw);   
-prompt = '\n \n Are you pleased with the result?  [1 = y / 0 = n] \n \n ';
-chans = input(prompt);
-
+    data_tms_raw = ft_selectdata(data_tms_raw, 'channel', selchan);
+    
+    
+    cfg.blocksize = 2;
+    cfg.demean = 'yes';
+    cfg.continuous = 'no';
+    ft_databrowser(cfg, data_tms_raw);
+    prompt = '\n \n Are you pleased with the result?  [1 = y / 0 = n] \n \n ';
+    chans = input(prompt);
+    
 end
 
 
-
-prompt = '\n \n Please enter the bad trials. \n \n';
-badTrials = input(prompt);
-
-cfg_artifact = [];
-
-for i = 1:length(badTrials)
-    cfg_artifact.artfctdef.badTrial.artifact(i,1) = trl(badTrials(i),1); 
-    cfg_artifact.artfctdef.badTrial.artifact(i,2) = trl(badTrials(i),2);    
-end
-
-
-cfg_artifact.artfctdef.reject = 'complete'; % Can also be 'complete', or 'nan';
-cfg_artifact.trl = trl; % We supply ft_rejectartifact with the original trial structure so it knows where to look for artifacts.
-cfg_artifact.artfctdef.minaccepttim = 0.01; % This specifies the minimumm size of resulting trials. You have to set this, the default is too large for thre present data, resulting in small artifact-free segments being rejected as well.
-data_tms_raw = ft_rejectartifact(cfg_artifact,data_tms_raw); % R
+%****** this data is good until here at least
 
 % Make an average to easily identify TMS pulse
 
 cfg = [];
 cfg.preproc.demean = 'yes';
 cfg.preproc.baselinewindow = [-0.1 -0.001];
- data_tms_avg = ft_timelockanalysis(cfg, data_tms_raw);
- 
+data_tms_avg = ft_timelockanalysis(cfg, data_tms_raw);
+
 cfg = [];
 cfg.preproc.demean = 'yes';
 cfg.preproc.baselinewindow = [-0.1 -0.001];
@@ -118,7 +103,7 @@ trigger = {'S  1'};              % Markers in data that reflect TMS-pulse onset
 cfg                         = [];
 cfg.method                  = 'marker'; % The alternative is 'detect' to detect the onset of pulses
 cfg.dataset                 = fileName;
-cfg.prestim                 = 0;     % First time-point of range to exclude
+cfg.prestim                 = 0.002;     % First time-point of range to exclude
 cfg.poststim                = latency;     % Last time-point of range to exclude
 cfg.trialdef.eventtype      = 'Stimulus';
 cfg.trialdef.eventvalue     = trigger ;
@@ -127,32 +112,32 @@ cfg_ringing_s1 = ft_artifact_tms(cfg);     % Detect TMS artifacts
 % Here we use a negative value because the recharging artifact starts AFTER TMS-pulse onset
 trigger = {'S  2'};
 cfg.trialdef.eventvalue     = trigger ;
-cfg.prestim   = -0.1; 
+cfg.prestim   = -0.098;
 cfg.poststim  = latency+0.1;
-cfg_ringing_s2  = ft_artifact_tms(cfg); % Detect TMS artifacts 
+cfg_ringing_s2  = ft_artifact_tms(cfg); % Detect TMS artifacts
 
 trigger = {'S  2'};
 cfg.trialdef.eventvalue     = trigger ;
-cfg.prestim   = 0; 
+cfg.prestim   = 0.002;
 cfg.poststim  = .03;
-cfg_ringing_s2_a  = ft_artifact_tms(cfg); % Detect TMS artifacts 
+cfg_ringing_s2_a  = ft_artifact_tms(cfg); % Detect TMS artifacts
 
 trigger = {'S  3'};
 cfg.trialdef.eventvalue     = trigger ;
-cfg.prestim   = 0; 
+cfg.prestim   = 0.002;
 cfg.poststim  = latency+0.011;
-cfg_ringing_s3  = ft_artifact_tms(cfg); % Detect TMS artifacts 
+cfg_ringing_s3  = ft_artifact_tms(cfg); % Detect TMS artifacts
 
 trigger = {'S  4'};
 cfg.trialdef.eventvalue     = trigger ;
-cfg.prestim   = 0; 
+cfg.prestim   = 0.002;
 cfg.poststim  = latency+0.001;
 cfg_ringing_s4  = ft_artifact_tms(cfg); % Detect TMS artifacts
 
 % Combine into one structure
 cfg_artifact = [];
-cfg_artifact.dataset = fileName;
-cfg_artifact.artfctdef.ringing.artifact = vertcat(cfg_ringing_s1.artfctdef.tms.artifact,cfg_ringing_s2.artfctdef.tms.artifact,cfg_ringing_s3.artfctdef.tms.artifact,cfg_ringing_s4.artfctdef.tms.artifact); % Add ringing/step response artifact definition
+%cfg_artifact.dataset = fileName;    % ******** here is the use of old raw data
+%cfg_artifact.artfctdef.ringing.artifact = vertcat(cfg_ringing_s1.artfctdef.tms.artifact,cfg_ringing_s2.artfctdef.tms.artifact,cfg_ringing_s3.artfctdef.tms.artifact,cfg_ringing_s4.artfctdef.tms.artifact); % Add ringing/step response artifact definition
 
 
 cfg_artifact.artfctdef.ringing_s1.artifact = cfg_ringing_s1.artfctdef.tms.artifact; % Add ringing/step response artifact definition
@@ -169,27 +154,186 @@ cfg_artifact.artfctdef.ringing_s4.artifact = cfg_ringing_s4.artfctdef.tms.artifa
 cfg_artifact.artfctdef.reject = 'partial'; % Can also be 'complete', or 'nan';
 cfg_artifact.trl = trl; % We supply ft_rejectartifact with the original trial structure so it knows where to look for artifacts.
 cfg_artifact.artfctdef.minaccepttim = 0.01; % This specifies the minimumm size of resulting trials. You have to set this, the default is too large for thre present data, resulting in small artifact-free segments being rejected as well.
-cfg = ft_rejectartifact(cfg_artifact); % Reject trials partially
+data_tms_segmented = ft_rejectartifact(cfg_artifact, data_tms_raw); % Reject trials partially
 
-cfg.channel = {'all' '-FC6' '-POz' '-CPz'};
-cfg.reref       = 'yes';
-cfg.refchannel  = {'all'};
-cfg.implicitref = 'FCz';
-data_tms_segmented  = ft_preprocessing(cfg,data_tms_raw);
+trl_segmented = data_tms_segmented.cfg.trl;
+trl2 = trl_segmented;
+
+% insert trial rejection here
+
+% jump artifect
+cfg                    = [];
+cfg.trl = data_tms_segmented.cfg.trl;
+
+% channel selection, cutoff and padding
+cfg.artfctdef.zvalue.channel    = 'EEG';
+cfg.artfctdef.zvalue.cutoff     = 30;
+cfg.artfctdef.zvalue.trlpadding = 0;
+cfg.artfctdef.zvalue.artpadding = 0;
+cfg.artfctdef.zvalue.fltpadding = 0;
+
+% algorithmic parameters
+cfg.artfctdef.zvalue.cumulative    = 'yes';
+cfg.artfctdef.zvalue.medianfilter  = 'yes';
+cfg.artfctdef.zvalue.medianfiltord = 9;
+cfg.artfctdef.zvalue.absdiff       = 'yes';
+
+% make the process interactive
+cfg.artfctdef.zvalue.interactive = 'yes';
+
+[cfg, artifact_jump] = ft_artifact_zvalue(cfg,data_tms_segmented);
+
+
+% muscle
+cfg            = [];
+cfg.trl = data_tms_segmented.cfg.trl;
+
+% channel selection, cutoff and padding
+cfg.artfctdef.zvalue.channel    = 'EEG';
+cfg.artfctdef.zvalue.cutoff      = 18;
+cfg.artfctdef.zvalue.trlpadding  = 0;
+cfg.artfctdef.zvalue.fltpadding  = 0;
+cfg.artfctdef.zvalue.artpadding  = 0;
+
+% algorithmic parameters
+cfg.artfctdef.zvalue.bpfilter    = 'yes';
+cfg.artfctdef.zvalue.bpfreq      = [110 140];
+cfg.artfctdef.zvalue.bpfiltord   = 11;
+cfg.artfctdef.zvalue.bpfilttype  = 'fir';
+cfg.artfctdef.zvalue.hilbert     = 'yes';
+cfg.artfctdef.zvalue.boxcar      = 0.2;
+
+% make the process interactive
+cfg.artfctdef.zvalue.interactive = 'yes';
+
+[cfg, artifact_muscle] = ft_artifact_zvalue(cfg,data_tms_segmented);
+
+% EOG
+
+cfg            = [];
+cfg.trl = data_tms_segmented.cfg.trl;
+
+
+% channel selection, cutoff and padding
+cfg.artfctdef.zvalue.channel     = 'EEG';
+cfg.artfctdef.zvalue.cutoff      = 36;
+cfg.artfctdef.zvalue.trlpadding  = 0;
+cfg.artfctdef.zvalue.artpadding  = 0.1;
+cfg.artfctdef.zvalue.fltpadding  = 0;
+
+% algorithmic parameters
+cfg.artfctdef.zvalue.bpfilter   = 'yes';
+cfg.artfctdef.zvalue.bpfilttype = 'fir';
+cfg.artfctdef.zvalue.bpfreq     = [1 15];
+cfg.artfctdef.zvalue.bpfiltord  = 65;
+cfg.artfctdef.zvalue.hilbert    = 'yes';
+
+% feedback
+cfg.artfctdef.zvalue.interactive = 'yes';
+
+[cfg, artifact_EOG] = ft_artifact_zvalue(cfg, data_tms_segmented);
+
+
+cfg     = [];
+cfg.trl = trl;
+data_tms_trimmed = ft_redefinetrial(cfg, data_tms_segmented);
+
+cfg = [];
+cfg.demean = 'yes';
+cfg.viewmode = 'butterfly';
+cfg.artfctdef.artifact_EOG.artifact = artifact_EOG;% Store previously obtained artifact definition
+cfg.artfctdef.artifact_muscle.artifact = artifact_muscle;
+cfg.artfctdef.artifact_jump.artifact = artifact_jump;
+cfg.continuous = 'no'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
+ft_databrowser(cfg, data_tms_trimmed);
+
+
+prompt = '\n \n Please enter the bad trials. \n \n';
+badTrialsHand = input(prompt);
+
+cfg =[];
+
+for i = 1:length(badTrialsHand)
+    cfg.artfctdef.badTrial.artifact(i,1) = trl(badTrialsHand(i),1);
+    cfg.artfctdef.badTrial.artifact(i,2) = trl(badTrialsHand(i),2);
+end
+
+
+
+cfg.artfctdef.artifact_EOG.artifact = artifact_EOG; % Add ringing/step response artifact definition
+cfg.artfctdef.artifact_jump.artifact = artifact_jump;
+cfg.artfctdef.artifact_muscle.artifact = artifact_muscle;
+
+% reject the bad trials picked by hand and automatically
+
+cfg.artfctdef.reject = 'complete'; % Can also be 'complete', or 'nan';
+cfg.trl = trl; % We supply ft_rejectartifact with the original trial structure so it knows where to look for artifacts.
+cfg.artfctdef.minaccepttim = 0.01; % This specifies the minimumm size of resulting trials. You have to set this, the default is too large for thre present data, resulting in small artifact-free segments being rejected as well.
+data_tms_trimmed = ft_rejectartifact(cfg,data_tms_trimmed); % R
+
+trl_trimmed = data_tms_trimmed.cfg.trl;
+
+
+% update the trl_segmented definition to exclude the rejected trials
+% first identify the hand picked trials
+count =1;
+i =1;
+while i<=length(badTrialsHand)
+    
+    if mod(badTrialsHand(i),2)      % odd 
+        badTrials(count) = 2*badTrialsHand(i)-1;
+        badTrials(count+1) = 2*badTrialsHand(i);
+    else                            % even
+        badTrials(count) = 2*badTrialsHand(i);
+        badTrials(count+1) = 2*badTrialsHand(i)-1;
+    end
+    i= i+1;
+    count = count+2;
+    
+end
+
+% then identify the automatically picked trials
+artifact_all = cat(1,artifact_EOG,artifact_jump, artifact_muscle);
+for i = 1:length(trl_segmented)
+    for j = 1:length(artifact_all)
+        if trl_segmented(i,1) <= artifact_all(j,1) && artifact_all(j,1) <= trl_segmented(i,2)
+            if mod(i,2)      % odd
+                badTrials(end+1) = i;
+                badTrials(end+1) = i+1;
+                break;
+            else            % even
+                badTrials(end+1) = i-1;
+                badTrials(end+1) = i;
+                break;
+            end
+        end
+    end
+end
+badTrials= unique(badTrials);
+
+% remove trials from the trl definition
+trl_segmented(badTrials,:) = [];
+
+
+
+% re-define to the segmented version of the data but now without bad trials
+
+cfg = [];
+cfg.trl = trl_segmented;
+data_tms_segmented = ft_redefinetrial(cfg, data_tms_trimmed);
 
 % Browse data without artifacts
 
 cfg = [];
 cfg.demean = 'yes';
-cfg.artfctdef = cfg_artifact.artfctdef; % Store previously obtained artifact definition
 cfg.continuous = 'no'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
 ft_databrowser(cfg, data_tms_segmented);
 
 % resample into new data structure
-cfg                      = [];
-cfg.resamplefs           = 1000; % Frequency to resample to
-cfg.demean               = 'yes';
-data_tms_segmented_resampled = ft_resampledata(cfg, data_tms_segmented);
+% cfg                      = [];
+% cfg.resamplefs           = 1000; % Frequency to resample to
+% cfg.demean               = 'yes';
+% data_tms_segmented_resampled = ft_resampledata(cfg, data_tms_segmented);
 
 
 % Perform ICA on segmented data
@@ -201,7 +345,7 @@ cfg.fastica.g = 'gauss';
 
 % might need to downsample here ****************
  
-comp_tms = ft_componentanalysis(cfg, data_tms_segmented_resampled);
+comp_tms = ft_componentanalysis(cfg, data_tms_segmented);
 
 % checkout the data
 
@@ -284,37 +428,37 @@ data_tms_clean_segmented = ft_rejectcomponent(cfg, comp_tms);
 % Interpolate data
 % Apply original structure to segmented data, gaps will be filled with nans
 cfg     = [];
-cfg.trl = trl;
+cfg.trl = trl_trimmed;
 data_tms_clean = ft_redefinetrial(cfg, data_tms_clean_segmented); % Restructure cleaned data
-
+clear data_tms_clean_segmented;
 
 % Replacing muscle artifact with nans
 
 if pulseType ==1
-    muscle_window = [0 latency]; % The window we would like to replace with nans
+    muscle_window = [-0.002 latency]; % The window we would like to replace with nans
     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
     for i=1:numel(data_tms_clean.trial) % Loop through all trials
         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
     end;
 elseif pulseType ==2
-    muscle_window = [0 0.03]; % The window we would like to replace with nans
+    muscle_window = [-0.002 0.03]; % The window we would like to replace with nans
     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
     for i=1:numel(data_tms_clean.trial) % Loop through all trials
         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
     end;
-    muscle_window = [0.1 latency+0.1]; % The window we would like to replace with nans
+    muscle_window = [0.098 latency+0.1]; % The window we would like to replace with nans
     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
     for i=1:numel(data_tms_clean.trial) % Loop through all trials
         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
     end;
 elseif pulseType ==3
-    muscle_window = [0 latency+0.011]; % The window we would like to replace with nans
+    muscle_window = [-0.002 latency+0.011]; % The window we would like to replace with nans
     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
     for i=1:numel(data_tms_clean.trial) % Loop through all trials
         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
     end;
 elseif pulseType ==4
-    muscle_window = [0 latency+0.001]; % The window we would like to replace with nans
+    muscle_window = [-0.002 latency+0.001]; % The window we would like to replace with nans
     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
     for i=1:numel(data_tms_clean.trial) % Loop through all trials
         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
