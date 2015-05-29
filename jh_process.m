@@ -240,7 +240,7 @@ data_tms_trimmed = ft_redefinetrial(cfg, data_tms_segmented);
 
 cfg = [];
 cfg.demean = 'yes';
-cfg.viewmode = 'butterfly';
+cfg.viewmode = 'vertical';
 cfg.artfctdef.artifact_EOG.artifact = artifact_EOG;% Store previously obtained artifact definition
 cfg.artfctdef.artifact_muscle.artifact = artifact_muscle;
 cfg.artfctdef.artifact_jump.artifact = artifact_jump;
@@ -253,12 +253,12 @@ badTrialsHand = input(prompt);
 
 cfg =[];
 
+
+
 for i = 1:length(badTrialsHand)
     cfg.artfctdef.badTrial.artifact(i,1) = trl(badTrialsHand(i),1);
     cfg.artfctdef.badTrial.artifact(i,2) = trl(badTrialsHand(i),2);
 end
-
-
 
 cfg.artfctdef.artifact_EOG.artifact = artifact_EOG; % Add ringing/step response artifact definition
 cfg.artfctdef.artifact_jump.artifact = artifact_jump;
@@ -279,36 +279,43 @@ trl_trimmed = data_tms_trimmed.cfg.trl;
 count =1;
 i =1;
 while i<=length(badTrialsHand)
-    
-    if mod(badTrialsHand(i),2)      % odd 
-        badTrials(count) = 2*badTrialsHand(i)-1;
-        badTrials(count+1) = 2*badTrialsHand(i);
-    else                            % even
-        badTrials(count) = 2*badTrialsHand(i);
-        badTrials(count+1) = 2*badTrialsHand(i)-1;
-    end
-    i= i+1;
-    count = count+2;
-    
+        if pulseType ~= 2
+            badTrials(count) = 2*badTrialsHand(i)-1;
+            badTrials(count+1) = 2*badTrialsHand(i);
+            count = count+2;
+        else
+            badTrials(count) = 3*badTrialsHand(i)-1;
+            badTrials(count+1) = 3*badTrialsHand(i);
+            badTrials(count+2) = 3*badTrialsHand(i)-2;
+            count = count+3;
+        end   
+        i= i+1;
 end
 
 % then identify the automatically picked trials
 artifact_all = cat(1,artifact_EOG,artifact_jump, artifact_muscle);
-for i = 1:length(trl_segmented)
-    for j = 1:length(artifact_all)
+i=1;
+while i <= length(trl_segmented)
+    while j <= length(artifact_all)
         if trl_segmented(i,1) <= artifact_all(j,1) && artifact_all(j,1) <= trl_segmented(i,2)
-            if mod(i,2)      % odd
-                badTrials(end+1) = i;
-                badTrials(end+1) = i+1;
-                break;
-            else            % even
-                badTrials(end+1) = i-1;
-                badTrials(end+1) = i;
-                break;
-            end
+            
+                if pulseType  ~= 2
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i+1;
+                    badTrials(end+1) = 
+                    break;
+                else 
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i+1;
+                    break;
+                end
+            
         end
     end
 end
+
+else
+    
 badTrials= unique(badTrials);
 
 % remove trials from the trl definition
