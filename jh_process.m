@@ -1,7 +1,7 @@
-addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507'
-addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507/utilities'
-addpath '/Users/jay/Desktop/Work/EEG_tests/s13'   % make this which ever path leads to the data being processed
-fileName = '1501_s13_M1.eeg';
+% addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507'
+% addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507/utilities'
+% addpath '/Users/jay/Desktop/Work/EEG_tests/s13'   % make this which ever path leads to the data being processed
+fileName = '1501_s12_M1.eeg';
 
 prompt = '\n Please define the pulse paradigme to be analyzed (1, 2, 3, 4) . \n\n';
 pulseType = input(prompt);
@@ -295,26 +295,48 @@ end
 % then identify the automatically picked trials
 artifact_all = cat(1,artifact_EOG,artifact_jump, artifact_muscle);
 i=1;
+j=1;
 while i <= length(trl_segmented)
+    j = 1;
     while j <= length(artifact_all)
         if trl_segmented(i,1) <= artifact_all(j,1) && artifact_all(j,1) <= trl_segmented(i,2)
-            
-                if pulseType  ~= 2
-                    badTrials(end+1) = i;
-                    badTrials(end+1) = i+1;
-                    badTrials(end+1) = 
-                    break;
-                else 
-                    badTrials(end+1) = i;
-                    badTrials(end+1) = i+1;
-                    break;
-                end
+            if mod(i,3)==0
+                badTrials(end+1) = i;
+                badTrials(end+1) = i-1;
+                badTrials(end+1) = i-2;
+                break;
+            elseif mod(i,3) ==1
+                badTrials(end+1) = i;
+                badTrials(end+1) = i+1;
+                badTrials(end+1) = i+2;
+                break;
+            elseif mod(i,3) ==2
+                badTrials(end+1) = i;
+                badTrials(end+1) = i-1;
+                badTrials(end+1) = i+1;
+                break;
+            end    
+%                 if pulseType  ~= 2
+%                     badTrials(end+1) = 2*i;
+%                     badTrials(end+1) = 2*i-1;
+%                     j= j+2;
+%                     
+%                     break;
+%                 else 
+%                     badTrials(end+1) = 3*i;
+%                     badTrials(end+1) = 3*i-1;
+%                     badTrials(end+1) = 3*i-2;
+%                     j = j+3;
+%                     break;
+%                 end
             
         end
+        j= j+1;
     end
+    i = i+1;
 end
 
-else
+
     
 badTrials= unique(badTrials);
 
