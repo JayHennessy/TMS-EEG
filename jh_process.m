@@ -1,7 +1,7 @@
-% addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507'
-% addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507/utilities'
-% addpath '/Users/jay/Desktop/Work/EEG_tests/s13'   % make this which ever path leads to the data being processed
-fileName = '1501_s12_M1.eeg';
+addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507'
+addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507/utilities'
+addpath '/Users/jay/Desktop/Work/EEG_tests/s13'   % make this which ever path leads to the data being processed
+fileName = '1501_s13_M1.eeg';
 
 prompt = '\n Please define the pulse paradigme to be analyzed (1, 2, 3, 4) . \n\n';
 pulseType = input(prompt);
@@ -159,6 +159,8 @@ data_tms_segmented = ft_rejectartifact(cfg_artifact, data_tms_raw); % Reject tri
 trl_segmented = data_tms_segmented.cfg.trl;
 trl2 = trl_segmented;
 
+clear data_tms_raw;
+
 % insert trial rejection here
 
 % jump artifect
@@ -208,31 +210,6 @@ cfg.artfctdef.zvalue.interactive = 'yes';
 
 [cfg, artifact_muscle] = ft_artifact_zvalue(cfg,data_tms_segmented);
 
-% EOG
-
-cfg            = [];
-cfg.trl = data_tms_segmented.cfg.trl;
-
-
-% channel selection, cutoff and padding
-cfg.artfctdef.zvalue.channel     = 'EEG';
-cfg.artfctdef.zvalue.cutoff      = 36;
-cfg.artfctdef.zvalue.trlpadding  = 0;
-cfg.artfctdef.zvalue.artpadding  = 0.1;
-cfg.artfctdef.zvalue.fltpadding  = 0;
-
-% algorithmic parameters
-cfg.artfctdef.zvalue.bpfilter   = 'yes';
-cfg.artfctdef.zvalue.bpfilttype = 'fir';
-cfg.artfctdef.zvalue.bpfreq     = [1 15];
-cfg.artfctdef.zvalue.bpfiltord  = 65;
-cfg.artfctdef.zvalue.hilbert    = 'yes';
-
-% feedback
-cfg.artfctdef.zvalue.interactive = 'yes';
-
-[cfg, artifact_EOG] = ft_artifact_zvalue(cfg, data_tms_segmented);
-
 
 cfg     = [];
 cfg.trl = trl;
@@ -240,8 +217,7 @@ data_tms_trimmed = ft_redefinetrial(cfg, data_tms_segmented);
 
 cfg = [];
 cfg.demean = 'yes';
-cfg.viewmode = 'vertical';
-cfg.artfctdef.artifact_EOG.artifact = artifact_EOG;% Store previously obtained artifact definition
+cfg.viewmode = 'butterfly';
 cfg.artfctdef.artifact_muscle.artifact = artifact_muscle;
 cfg.artfctdef.artifact_jump.artifact = artifact_jump;
 cfg.continuous = 'no'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
@@ -260,7 +236,6 @@ for i = 1:length(badTrialsHand)
     cfg.artfctdef.badTrial.artifact(i,2) = trl(badTrialsHand(i),2);
 end
 
-cfg.artfctdef.artifact_EOG.artifact = artifact_EOG; % Add ringing/step response artifact definition
 cfg.artfctdef.artifact_jump.artifact = artifact_jump;
 cfg.artfctdef.artifact_muscle.artifact = artifact_muscle;
 
@@ -279,64 +254,74 @@ trl_trimmed = data_tms_trimmed.cfg.trl;
 count =1;
 i =1;
 while i<=length(badTrialsHand)
-        if pulseType ~= 2
-            badTrials(count) = 2*badTrialsHand(i)-1;
-            badTrials(count+1) = 2*badTrialsHand(i);
-            count = count+2;
-        else
-            badTrials(count) = 3*badTrialsHand(i)-1;
-            badTrials(count+1) = 3*badTrialsHand(i);
-            badTrials(count+2) = 3*badTrialsHand(i)-2;
-            count = count+3;
-        end   
-        i= i+1;
+    if pulseType ~= 2
+        badTrials(count) = 2*badTrialsHand(i)-1;
+        badTrials(count+1) = 2*badTrialsHand(i);
+        count = count+2;
+    else
+        badTrials(count) = 3*badTrialsHand(i)-1;
+        badTrials(count+1) = 3*badTrialsHand(i);
+        badTrials(count+2) = 3*badTrialsHand(i)-2;
+        count = count+3;
+    end
+    i= i+1;
 end
 
 % then identify the automatically picked trials
-artifact_all = cat(1,artifact_EOG,artifact_jump, artifact_muscle);
-i=1;
-j=1;
-while i <= length(trl_segmented)
-    j = 1;
-    while j <= length(artifact_all)
-        if trl_segmented(i,1) <= artifact_all(j,1) && artifact_all(j,1) <= trl_segmented(i,2)
-            if mod(i,3)==0
-                badTrials(end+1) = i;
-                badTrials(end+1) = i-1;
-                badTrials(end+1) = i-2;
-                break;
-            elseif mod(i,3) ==1
-                badTrials(end+1) = i;
-                badTrials(end+1) = i+1;
-                badTrials(end+1) = i+2;
-                break;
-            elseif mod(i,3) ==2
-                badTrials(end+1) = i;
-                badTrials(end+1) = i-1;
-                badTrials(end+1) = i+1;
-                break;
-            end    
-%                 if pulseType  ~= 2
-%                     badTrials(end+1) = 2*i;
-%                     badTrials(end+1) = 2*i-1;
-%                     j= j+2;
-%                     
-%                     break;
-%                 else 
-%                     badTrials(end+1) = 3*i;
-%                     badTrials(end+1) = 3*i-1;
-%                     badTrials(end+1) = 3*i-2;
-%                     j = j+3;
-%                     break;
-%                 end
-            
+if pulseType ~= 2
+    artifact_all = cat(1,artifact_jump, artifact_muscle);
+    i=1;
+    j=1;
+    while i <= length(trl_segmented)
+        j = 1;
+        while j <= length(artifact_all)
+            if trl_segmented(i,1) <= artifact_all(j,1) && artifact_all(j,1) <= trl_segmented(i,2)
+                if mod(i,2)==0
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i-1;  
+                    break;
+                else
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i+1;  
+                    break;
+                end
+            end
+            j= j+1;
         end
-        j= j+1;
+        i = i+1;
     end
-    i = i+1;
+    
+else
+    artifact_all = cat(1,artifact_jump, artifact_muscle);
+    i=1;
+    j=1;
+    while i <= length(trl_segmented)
+        j = 1;
+        while j <= length(artifact_all)
+            if trl_segmented(i,1) <= artifact_all(j,1) && artifact_all(j,1) <= trl_segmented(i,2)
+                if mod(i,3)==0
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i-1;
+                    badTrials(end+1) = i-2;
+                    break;
+                elseif mod(i,3) ==1
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i+1;
+                    badTrials(end+1) = i+2;
+                    break;
+                elseif mod(i,3) ==2
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i-1;
+                    badTrials(end+1) = i+1;
+                    break;
+                end
+                
+            end
+            j= j+1;
+        end
+        i = i+1;
+    end
 end
-
-
     
 badTrials= unique(badTrials);
 
@@ -495,16 +480,20 @@ elseif pulseType ==4
 end;
 
 
-
-
-
-
 % Interpolate nans using cubic interpolation
 cfg = [];
 cfg.method = 'pchip'; % Here you can specify any method that is supported by interp1: 'nearest','linear','spline','pchip','cubic','v5cubic'
 cfg.prewindow = 0.01; % Window prior to segment to use data points for interpolation
 cfg.postwindow = 0.01; % Window after segment to use data points for interpolation
 data_tms_clean = ft_interpolatenan(cfg, data_tms_clean); % Clean data
+
+cfg = [];
+cfg.bpfilter = 'yes';
+cfg.dftfilter = 'yes';
+cfg.bpfreq = [0.3 80];
+cfg.dftfreq = [60 120 180];
+cfg.bpfilttype = 'firws';
+data_tms_clean = ft_preprocessing(cfg, data_tms_clean);
  
 % compute the TEP on the cleaned data
 cfg = [];
