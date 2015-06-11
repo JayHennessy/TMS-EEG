@@ -1,7 +1,7 @@
 addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507'
 addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507/utilities'
 addpath '/Users/jay/Desktop/Work/EEG_tests/s13'   % make this which ever path leads to the data being processed
-fileName = '1501_s13_M1.eeg';
+fileName = '1501_s13_DLPFC.eeg';
 
 prompt = '\n Please define the pulse paradigme to be analyzed (1, 2, 3, 4) . \n\n';
 pulseType = input(prompt);
@@ -25,6 +25,7 @@ cfg.trialdef.prestim        = .5;         % prior to event onset
 cfg.trialdef.poststim       = 1.5;        % after event onset
 cfg.trialdef.eventtype      = 'Stimulus'; % see above
 cfg.trialdef.eventvalue     = triggers ;
+cfg.trialfun                = 'jh_trialfun';
 cfg = ft_definetrial(cfg);                % make the trial definition matrix
 
 trl = cfg.trl;
@@ -214,6 +215,7 @@ cfg.artfctdef.zvalue.interactive = 'yes';
 cfg     = [];
 cfg.trl = trl;
 data_tms_trimmed = ft_redefinetrial(cfg, data_tms_segmented);
+temp = data_tms_trimmed;
 
 cfg = [];
 cfg.demean = 'yes';
@@ -254,44 +256,22 @@ trl_trimmed = data_tms_trimmed.cfg.trl;
 count =1;
 i =1;
 while i<=length(badTrialsHand)
-    if pulseType ~= 2
-        badTrials(count) = 2*badTrialsHand(i)-1;
-        badTrials(count+1) = 2*badTrialsHand(i);
-        count = count+2;
-    else
+    if pulseType ==2
         badTrials(count) = 3*badTrialsHand(i)-1;
         badTrials(count+1) = 3*badTrialsHand(i);
         badTrials(count+2) = 3*badTrialsHand(i)-2;
         count = count+3;
+    else
+        badTrials(count) = 2*badTrialsHand(i)-1;
+        badTrials(count+1) = 2*badTrialsHand(i);
+        count = count+2;
     end
     i= i+1;
 end
 
 % then identify the automatically picked trials
-if pulseType ~= 2
-    artifact_all = cat(1,artifact_jump, artifact_muscle);
-    i=1;
-    j=1;
-    while i <= length(trl_segmented)
-        j = 1;
-        while j <= length(artifact_all)
-            if trl_segmented(i,1) <= artifact_all(j,1) && artifact_all(j,1) <= trl_segmented(i,2)
-                if mod(i,2)==0
-                    badTrials(end+1) = i;
-                    badTrials(end+1) = i-1;  
-                    break;
-                else
-                    badTrials(end+1) = i;
-                    badTrials(end+1) = i+1;  
-                    break;
-                end
-            end
-            j= j+1;
-        end
-        i = i+1;
-    end
-    
-else
+if pulseType == 2
+   
     artifact_all = cat(1,artifact_jump, artifact_muscle);
     i=1;
     j=1;
@@ -316,6 +296,29 @@ else
                     break;
                 end
                 
+            end
+            j= j+1;
+        end
+        i = i+1;
+    end
+   
+else
+    artifact_all = cat(1,artifact_jump, artifact_muscle);
+    i=1;
+    j=1;
+    while i <= length(trl_segmented)
+        j = 1;
+        while j <= length(artifact_all)
+            if trl_segmented(i,1) <= artifact_all(j,1) && artifact_all(j,1) <= trl_segmented(i,2)
+                if mod(i,2)==0
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i-1;  
+                    break;
+                else
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i+1;  
+                    break;
+                end
             end
             j= j+1;
         end
@@ -448,36 +451,36 @@ clear data_tms_clean_segmented;
 
 % Replacing muscle artifact with nans
 
-if pulseType ==1
-    muscle_window = [-0.002 latency]; % The window we would like to replace with nans
-    muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
-    for i=1:numel(data_tms_clean.trial) % Loop through all trials
-        data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-    end;
-elseif pulseType ==2
-    muscle_window = [-0.002 0.03]; % The window we would like to replace with nans
-    muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
-    for i=1:numel(data_tms_clean.trial) % Loop through all trials
-        data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-    end;
-    muscle_window = [0.098 latency+0.1]; % The window we would like to replace with nans
-    muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
-    for i=1:numel(data_tms_clean.trial) % Loop through all trials
-        data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-    end;
-elseif pulseType ==3
-    muscle_window = [-0.002 latency+0.011]; % The window we would like to replace with nans
-    muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
-    for i=1:numel(data_tms_clean.trial) % Loop through all trials
-        data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-    end;
-elseif pulseType ==4
-    muscle_window = [-0.002 latency+0.001]; % The window we would like to replace with nans
-    muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
-    for i=1:numel(data_tms_clean.trial) % Loop through all trials
-        data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-    end;
-end;
+% if pulseType ==1
+%     muscle_window = [-0.002 latency]; % The window we would like to replace with nans
+%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
+%     for i=1:numel(data_tms_clean.trial) % Loop through all trials
+%         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
+%     end;
+% elseif pulseType ==2
+%     muscle_window = [-0.002 0.03]; % The window we would like to replace with nans
+%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
+%     for i=1:numel(data_tms_clean.trial) % Loop through all trials
+%         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
+%     end;
+%     muscle_window = [0.098 latency+0.1]; % The window we would like to replace with nans
+%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
+%     for i=1:numel(data_tms_clean.trial) % Loop through all trials
+%         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
+%     end;
+% elseif pulseType ==3
+%     muscle_window = [-0.002 latency+0.011]; % The window we would like to replace with nans
+%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
+%     for i=1:numel(data_tms_clean.trial) % Loop through all trials
+%         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
+%     end;
+% elseif pulseType ==4
+%     muscle_window = [-0.002 latency+0.001]; % The window we would like to replace with nans
+%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
+%     for i=1:numel(data_tms_clean.trial) % Loop through all trials
+%         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
+%     end;
+% end;
 
 
 % Interpolate nans using cubic interpolation
@@ -503,9 +506,9 @@ cfg.preproc.baselinewindow = [-0.05 -0.001];
 data_tms_clean_avg = ft_timelockanalysis(cfg, data_tms_clean);
 
 figure;
-plot(data_tms_clean_avg.time, data_tms_clean_avg.avg(17,:)); % Plot all data
-    xlim([-0.1 0.6]); % Here we can specify the limits of what to plot on the x-axis
+plot(data_tms_clean_avg.time, data_tms_clean_avg.avg(4,:)); % Plot all data
+    xlim([0.5 1.5]); % Here we can specify the limits of what to plot on the x-axis
    % ylim([-23 15]); % Here we can specify the limits of what to plot on the y-axis
-    title(['Channel ' data_tms_avg.label{17}]);
+    title(['Channel ' data_tms_avg.label{4}]);
     ylabel('Amplitude (uV)')
     xlabel('Time (s)');
