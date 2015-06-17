@@ -17,25 +17,27 @@ offset = 15;
 event = ft_read_event(cfg.dataset);
 dat = ft_read_data(cfg.dataset);
 
+ind = find(arrayfun(@(n) strcmp(event(n).value, cfg.trialdef.eventvalue), 1:numel(event)));
+
 count = 1;
 i     = 1;
 j     = 1;
 
-while i <= length(event)
-    j = 1;
-    if strcmp(event(i).value, cfg.trialdef.eventvalue)
-        while j <= event(i).sample+100
-            if abs(dat(5,event(i).sample+j)) >2000
-                trl(count,1) = event(i).sample + j - offset - cfg.trialdef.prestim*5000;
-                trl(count,2) = event(i).sample + j - offset + cfg.trialdef.poststim*5000 -1;
+while i <= length(ind)
+    j = event(ind(i)).sample-50;
+    
+        while j <= event(ind(i)).sample+200
+            if abs(dat(5,j)) >2500
+                trl(count,1) =  j - offset - cfg.trialdef.prestim*5000;
+                trl(count,2) =  j - offset + cfg.trialdef.poststim*5000 -1;
                 trl(count,3) = cfg.trialdef.prestim*5000;
-                trl(count,4) = str2double(event(i).value(4));
+                trl(count,4) = str2double(event(ind(i)).value(4));
                 count = count +1;
                 break
             end
             j = j +1;
         end
-    end
+    
     i = i +1;
 end
 

@@ -1,7 +1,7 @@
 addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507'
 addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507/utilities'
 addpath '/Users/jay/Desktop/Work/EEG_tests/s13'   % make this which ever path leads to the data being processed
-fileName = '1501_s13_DLPFC.eeg';
+fileName = '1501_s14_M1.eeg';
 
 prompt = '\n Please define the pulse paradigme to be analyzed (1, 2, 3, 4) . \n\n';
 pulseType = input(prompt);
@@ -160,7 +160,7 @@ data_tms_segmented = ft_rejectartifact(cfg_artifact, data_tms_raw); % Reject tri
 trl_segmented = data_tms_segmented.cfg.trl;
 trl2 = trl_segmented;
 
-clear data_tms_raw;
+%clear data_tms_raw;
 
 % insert trial rejection here
 
@@ -211,6 +211,8 @@ cfg.artfctdef.zvalue.interactive = 'yes';
 
 [cfg, artifact_muscle] = ft_artifact_zvalue(cfg,data_tms_segmented);
 
+% close all the figures
+close all
 
 cfg     = [];
 cfg.trl = trl;
@@ -347,22 +349,25 @@ cfg.continuous = 'no'; % Setting this to yes forces ft_databrowser to represent 
 ft_databrowser(cfg, data_tms_segmented);
 
 % resample into new data structure
-% cfg                      = [];
-% cfg.resamplefs           = 1000; % Frequency to resample to
-% cfg.demean               = 'yes';
-% data_tms_segmented_resampled = ft_resampledata(cfg, data_tms_segmented);
+cfg                      = [];
+cfg.resamplefs           = 1000; % Frequency to resample to
+cfg.demean               = 'yes';
+data_tms_segmented_resampled = ft_resampledata(cfg, data_tms_segmented);
 
+% close opened figures
+close all
 
 % Perform ICA on segmented data
 cfg = [];
 cfg.demean = 'yes'; 
 cfg.method = 'fastica';        % FieldTrip supports multiple ways to perform ICA, 'fastica' is one of them.
+cfg.fastica.numOfIC = length(data_tms_segmented.label)-5;
 cfg.fastica.approach = 'symm'; % All components will be estimated simultaneously.
 cfg.fastica.g = 'gauss'; 
 
 % might need to downsample here ****************
  
-comp_tms = ft_componentanalysis(cfg, data_tms_segmented);
+comp_tms = ft_componentanalysis(cfg, data_tms_segmented_resampled);
 
 % checkout the data
 
@@ -378,8 +383,10 @@ ft_databrowser(cfg, comp_tms_avg);
 
 figure;
 cfg = [];
+% cfg.renderer = 'painters'  % use this if the analysis is on a PC
 cfg.plotlabels = 'yes';
-cfg.viewmode = 'vertical';
+cfg.viewmode = 'component';
+cfg.layout    = 'easycap_J61';
 ft_databrowser(cfg, comp_tms);
 
  % frequency analysis
@@ -392,8 +399,8 @@ ft_databrowser(cfg, comp_tms);
  cfg.taper           = 'hanning';
  cfg.foi             = 1:3:69; % Our frequencies of interest. Now: 1 to 50, in steps of 1.
  cfg.t_ftimwin       = 0.3.*ones(1,numel(cfg.foi));
- %cfg.toi             = -0.5:0.05:1.5;
- cfg.toi             = 0:0.0002:0.8932;
+ cfg.toi             = 0:0.05:2;
+ %cfg.toi             = 0:0.0002:0.8932;
  
  
  freq = ft_freqanalysis(cfg, comp_tms);
@@ -405,8 +412,8 @@ ft_databrowser(cfg, comp_tms);
  end
  
  cfg = [];
- cfg.xlim = [0 1.0]; % Specify the time range to plot
- cfg.zlim = [-500 500];
+ cfg.xlim =  'maxmin' % Specify the time range to plot
+ cfg.zlim =   [-25 25];
  cfg.layout = 'ordered';
  cfg.showlabels = 'yes';
  cfg.interactve = 'yes';
@@ -449,39 +456,8 @@ cfg.trl = trl_trimmed;
 data_tms_clean = ft_redefinetrial(cfg, data_tms_clean_segmented); % Restructure cleaned data
 clear data_tms_clean_segmented;
 
-% Replacing muscle artifact with nans
-
-% if pulseType ==1
-%     muscle_window = [-0.002 latency]; % The window we would like to replace with nans
-%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
-%     for i=1:numel(data_tms_clean.trial) % Loop through all trials
-%         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-%     end;
-% elseif pulseType ==2
-%     muscle_window = [-0.002 0.03]; % The window we would like to replace with nans
-%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
-%     for i=1:numel(data_tms_clean.trial) % Loop through all trials
-%         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-%     end;
-%     muscle_window = [0.098 latency+0.1]; % The window we would like to replace with nans
-%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
-%     for i=1:numel(data_tms_clean.trial) % Loop through all trials
-%         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-%     end;
-% elseif pulseType ==3
-%     muscle_window = [-0.002 latency+0.011]; % The window we would like to replace with nans
-%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
-%     for i=1:numel(data_tms_clean.trial) % Loop through all trials
-%         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-%     end;
-% elseif pulseType ==4
-%     muscle_window = [-0.002 latency+0.001]; % The window we would like to replace with nans
-%     muscle_window_idx = [nearest(data_tms_clean.time{1},muscle_window(1)) nearest(data_tms_clean.time{1},muscle_window(2))];
-%     for i=1:numel(data_tms_clean.trial) % Loop through all trials
-%         data_tms_clean.trial{i}(:,muscle_window_idx(1):muscle_window_idx(2))=nan; % Replace the segment of data corresponding to our window of interest with nans
-%     end;
-% end;
-
+% close all the opened figures
+close all
 
 % Interpolate nans using cubic interpolation
 cfg = [];
@@ -505,10 +481,14 @@ cfg.preproc.baselinewindow = [-0.05 -0.001];
  
 data_tms_clean_avg = ft_timelockanalysis(cfg, data_tms_clean);
 
+prompt = '\n \n What channel would you like to see? \n \n';
+channel = input(prompt);
+
+
 figure;
-plot(data_tms_clean_avg.time, data_tms_clean_avg.avg(4,:)); % Plot all data
-    xlim([0.5 1.5]); % Here we can specify the limits of what to plot on the x-axis
+plot(data_tms_clean_avg.time, data_tms_clean_avg.avg(channel,:)); % Plot all data
+    xlim([0.5 2.5]); % Here we can specify the limits of what to plot on the x-axis
    % ylim([-23 15]); % Here we can specify the limits of what to plot on the y-axis
-    title(['Channel ' data_tms_avg.label{4}]);
+    title(['Channel ' data_tms_avg.label{channel}]);
     ylabel('Amplitude (uV)')
     xlabel('Time (s)');
