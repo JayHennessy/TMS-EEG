@@ -1,7 +1,7 @@
 addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507'
 addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507/utilities'
 addpath '/Users/jay/Desktop/Work/EEG_tests/s13'   % make this which ever path leads to the data being processed
-fileName = '1501_s14_M1.eeg';
+fileName = '1501_s14_DLPFC.eeg';
 
 prompt = '\n Please define the pulse paradigme to be analyzed (1, 2, 3, 4) . \n\n';
 pulseType = input(prompt);
@@ -160,7 +160,7 @@ data_tms_segmented = ft_rejectartifact(cfg_artifact, data_tms_raw); % Reject tri
 trl_segmented = data_tms_segmented.cfg.trl;
 trl2 = trl_segmented;
 
-%clear data_tms_raw;
+clear data_tms_raw;
 
 % insert trial rejection here
 
