@@ -24,17 +24,21 @@ i     = 1;
 j     = 1;
 
 while i <= length(ind)
-    j = event(ind(i)).sample-50;
+    j = event(ind(i)).sample-200;
     
-        while j <= event(ind(i)).sample+200
-            if abs(dat(5,j)) >2500
-                trl(count,1) =  j - offset - cfg.trialdef.prestim*5000;
-                trl(count,2) =  j - offset + cfg.trialdef.poststim*5000 -1;
+        while j <= event(ind(i)).sample+400
+            if abs(j-abs(mean(dat(5,j-500:j-300)))) > 1500
+                trl(count,1) =  j - offset - cfg.trialdef.prestim*cfg.fs;
+                trl(count,2) =  j - offset + cfg.trialdef.poststim*cfg.fs -1;
                 trl(count,3) = cfg.trialdef.prestim*5000;
                 trl(count,4) = str2double(event(ind(i)).value(4));
                 count = count +1;
+                j
                 break
+            else
+                display(strcat('***** DID NOT FIND A PULSE AT ', num2str(i), ' *******'));
             end
+            
             j = j +1;
         end
     

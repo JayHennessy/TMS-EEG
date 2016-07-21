@@ -1,36 +1,35 @@
+% this version is to july 2016 before I started making changes from the
+% meeting with giovanni to recover data even though channel C3 was garbage
+
 addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507'
 addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507/utilities'
 %addpath '/Users/jay/Desktop/Work/EEG_tests/s13'   % make this which ever path leads to the data being processed
-fileName = 'jn_1501_s16_M1.eeg';
+fileName = '1501_s14_M1.eeg';
 
+prompt = '\n Please define the pulse paradigme to be analyzed (1, 2, 3, 4) . \n\n';
+pulseType = input(prompt);
 
-prestim = 0.5;  
-poststim = 1;
-triggers = {'S  1' , 'S  2','S  3','S  4'};
-
-% record info about the subject
-if strfind(fileName, 'DLPFC')
-    subjectInfo.stimLoc = 'DLPFC';
-elseif strfind(fileName, 'M1')
-    subjectInfo.stimLoc = 'M1';
-else
-    display(' ## could not find M1 or DLPFC in filename, M1 was assumed##');
-    subjectInfo.stimLoc = 'M1';
+switch pulseType
+    case 1
+        triggers = {'S  1'};
+    case 2 
+        triggers = {'S  2'};
+    case 3
+        triggers = {'S  3'};
+    case 4
+        triggers = {'S  4'};
 end
-
-x = strfind(fileName, '_s')
-subjectInfo.No = fileName(x+2:x+3);
 
 
 cfg = [];
 cfg.dataset                 = fileName;
+cfg.fs                      = 5000;
 cfg.continuous              = 'yes';
-cfg.fsample                 = 5000;       % this is the sampling rate
-cfg.trialdef.prestim        = prestim;         % prior to event onset
-cfg.trialdef.poststim       = poststim;        % after event onset
+cfg.trialdef.prestim        = .5;         % prior to event onset
+cfg.trialdef.poststim       = 1.5;        % after event onset
 cfg.trialdef.eventtype      = 'Stimulus'; % see above
 cfg.trialdef.eventvalue     = triggers ;
-cfg.trialfun                = 'jh_trialfun_all';
+cfg.trialfun                = 'jh_trialfun';
 cfg = ft_definetrial(cfg);                % make the trial definition matrix
 
 trl = cfg.trl;
@@ -41,12 +40,12 @@ cfg.refchannel = {'all'}; % Here we specify our reference channels
 cfg.implicitref = 'FCz';    % Here we can specify the name of the implicit reference electrode used during the acquisition
 
 data_tms_raw = ft_preprocessing(cfg);
-subjectInfo.beginningTrials = length(data_tms_raw.trial);
+
 %look at data, here you can identify eye blinks, or wait for ICA
 
-cfg = [];   
+cfg = [];
 cfg.preproc.demean = 'yes';
-cfg.preproc.baselinewindow = [-0.1 -0.01];
+cfg.preproc.baselinewindow = [-0.1 -0.001];
 ft_databrowser(cfg, data_tms_raw);
 
 chans = 0;
@@ -81,84 +80,79 @@ while chans == 0
     
 end
 
-% Interpolate missing channels if they are important
-if ~sum(ismember(data_tms_raw.label, 'C3')) && strcmp(subjectInfo.stimLoc, 'M1') % case for M1
-%     cfg = [];
-%   
-%     cfg.layout = 'easycap_J61';
-%     lay = ft_prepare_layout(cfg);
-% 
-%     cfg.method = 'distance';
-%     cfg.feedback = 'yes';
-%     cfg.channel = 'C3';
-%         
-%     neighbours = ft_prepare_neighbours(cfg, data_tms_raw)
-    neighbours(1).label = 'C3';
-    neighbours(1).neighblabel = {'C1','C5','FC3','CP3','CP5','CP1','FC5','FC1'};
-    cfg = [];
-    cfg.method = 'spline';
-    cfg.badchannel = {'C3'};
-    cfg.neighbours = neighbours;
-    
-    [data_tms_raw] = ft_channelrepair(cfg, data_tms_raw)
-    
-elseif ~sum(ismember(data_tms_raw.label, 'AF3')) && strcmp(subjectInfo.stimLoc, 'DLPFC') % case for DLPFC
-    cfg = [];
-    cfg.method = 'distance';
-    cfg.layout = 'easycap_J61';
-    cfg.channel = 'AF3';
-    
-    neighbours = ft_prepare_neighbours(cfg, data_tms_raw)
-    
-    cfg = [];
-    cfg.method = 'spline';
-    cfg.badchannel = {'AF3'};
-    cfg.neighbours = neighbours;
-    
-    [data_tms_raw] = ft_channelrepair(cfg, data_tms_raw)
 
-end
-
-subjectInfo.badChannels = badChannels;
 %****** this data is good until here at least
 
 % Make an average to easily identify TMS pulse
-for i  = 1:4
+
 cfg = [];
 cfg.preproc.demean = 'yes';
-cfg.preproc.baselinewindow = [-0.1 -0.01];
-cfg.trials  = find(data_tms_raw.trialinfo == i);
+cfg.preproc.baselinewindow = [-0.1 -0.001];
 data_tms_avg = ft_timelockanalysis(cfg, data_tms_raw);
 
 cfg = [];
 cfg.preproc.demean = 'yes';
-cfg.preproc.baselinewindow = [-0.1 -0.01];
+cfg.preproc.baselinewindow = [-0.1 -0.001];
 ft_databrowser(cfg, data_tms_avg);
-end
+
 % here we can clear data_tms_raw (note: it should be saved earlier)
 %clear data_tms_raw;
 
 prompt = '\n \n At what latency should the TMS artifact be cut? (usually ~0.01s) \n \n';
 latency = input(prompt);
-subjectInfo.pulseDuration = latency;
 
-% %identify TMS artifact
+%identify TMS artifact
 
 % Ringing/Step Response artifact
-trigger = {'S  1','S  2','S  3','S  4'};              % Markers in data that reflect TMS-pulse onset
+trigger = {'S  1'};              % Markers in data that reflect TMS-pulse onset
 cfg                         = [];
 cfg.method                  = 'marker'; % The alternative is 'detect' to detect the onset of pulses
-cfg.trialfun                = 'jh_trialfun_tms';
 cfg.dataset                 = fileName;
-cfg.data                    = data_tms_raw;
-cfg.prestim                 = 0.000;     % First time-point of range to exclude
+cfg.prestim                 = 0.002;     % First time-point of range to exclude
 cfg.poststim                = latency;     % Last time-point of range to exclude
 cfg.trialdef.eventtype      = 'Stimulus';
 cfg.trialdef.eventvalue     = trigger ;
-cfg_tms_artifact = ft_artifact_tms(cfg);     % Detect TMS artifacts
+cfg_ringing_s1 = ft_artifact_tms(cfg);     % Detect TMS artifacts
 
+% Here we use a negative value because the recharging artifact starts AFTER TMS-pulse onset
+trigger = {'S  2'};
+cfg.trialdef.eventvalue     = trigger ;
+cfg.prestim   = -0.098;
+cfg.poststim  = latency+0.1;
+cfg_ringing_s2  = ft_artifact_tms(cfg); % Detect TMS artifacts
+
+trigger = {'S  2'};
+cfg.trialdef.eventvalue     = trigger ;
+cfg.prestim   = 0.002;
+cfg.poststim  = .03;
+cfg_ringing_s2_a  = ft_artifact_tms(cfg); % Detect TMS artifacts
+
+trigger = {'S  3'};
+cfg.trialdef.eventvalue     = trigger ;
+cfg.prestim   = 0.002;
+cfg.poststim  = latency+0.011;
+cfg_ringing_s3  = ft_artifact_tms(cfg); % Detect TMS artifacts
+
+trigger = {'S  4'};
+cfg.trialdef.eventvalue     = trigger ;
+cfg.prestim   = 0.002;
+cfg.poststim  = latency+0.001;
+cfg_ringing_s4  = ft_artifact_tms(cfg); % Detect TMS artifacts
+
+% Combine into one structure
 cfg_artifact = [];
-cfg_artifact.artfctdef.ringing.artifact = cfg_tms_artifact.artfctdef.tms.artifact;
+%cfg_artifact.dataset = fileName;    % ******** here is the use of old raw data
+%cfg_artifact.artfctdef.ringing.artifact = vertcat(cfg_ringing_s1.artfctdef.tms.artifact,cfg_ringing_s2.artfctdef.tms.artifact,cfg_ringing_s3.artfctdef.tms.artifact,cfg_ringing_s4.artfctdef.tms.artifact); % Add ringing/step response artifact definition
+
+
+cfg_artifact.artfctdef.ringing_s1.artifact = cfg_ringing_s1.artfctdef.tms.artifact; % Add ringing/step response artifact definition
+cfg_artifact.artfctdef.ringing_s2.artifact = cfg_ringing_s2.artfctdef.tms.artifact;
+cfg_artifact.artfctdef.ringing_s2_a.artifact = cfg_ringing_s2_a.artfctdef.tms.artifact;
+cfg_artifact.artfctdef.ringing_s3.artifact = cfg_ringing_s3.artfctdef.tms.artifact;
+cfg_artifact.artfctdef.ringing_s4.artifact = cfg_ringing_s4.artfctdef.tms.artifact;
+
+
+
 
 % reject the TMS artifact
 
@@ -227,11 +221,10 @@ close all
 cfg     = [];
 cfg.trl = trl;
 data_tms_trimmed = ft_redefinetrial(cfg, data_tms_segmented);
-subjectInfo.removedTrials = length(data_tms_segmented.trial) -length(data_tms_trimmed.trial);
+temp = data_tms_trimmed;
 
 cfg = [];
-cfg.preproc.baselinewindow = [-0.1 -0.01];
-cfg.preproc.demean = 'yes';
+cfg.demean = 'yes';
 cfg.viewmode = 'butterfly';
 cfg.artfctdef.artifact_muscle.artifact = artifact_muscle;
 cfg.artfctdef.artifact_jump.artifact = artifact_jump;
@@ -269,44 +262,81 @@ trl_trimmed = data_tms_trimmed.cfg.trl;
 count =1;
 i =1;
 while i<=length(badTrialsHand)
-    
-    badTrials(count) = 2*badTrialsHand(i)-1;
-    badTrials(count+1) = 2*badTrialsHand(i);
-    count = count+2;
-    
+    if pulseType ==2
+        badTrials(count) = 3*badTrialsHand(i)-1;
+        badTrials(count+1) = 3*badTrialsHand(i);
+        badTrials(count+2) = 3*badTrialsHand(i)-2;
+        count = count+3;
+    else
+        badTrials(count) = 2*badTrialsHand(i)-1;
+        badTrials(count+1) = 2*badTrialsHand(i);
+        count = count+2;
+    end
     i= i+1;
 end
 
 % then identify the automatically picked trials
-
-artifact_all = cat(1,artifact_jump, artifact_muscle);
-i=1;
-j=1;
-while i <= length(trl_segmented)
-    j = 1;
-    while j <= length(artifact_all)
-        if trl_segmented(i,1) <= artifact_all(j,1) && artifact_all(j,1) <= trl_segmented(i,2)
-            if mod(i,2)==0
-                badTrials(end+1) = i;
-                badTrials(end+1) = i-1;
-                break;
-            else
-                badTrials(end+1) = i;
-                badTrials(end+1) = i+1;
-                break;
+if pulseType == 2
+   
+    artifact_all = cat(1,artifact_jump, artifact_muscle);
+    i=1;
+    j=1;
+    while i <= length(trl_segmented)
+        j = 1;
+        while j <= length(artifact_all)
+            if trl_segmented(i,1) <= artifact_all(j,1) && artifact_all(j,1) <= trl_segmented(i,2)
+                if mod(i,3)==0
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i-1;
+                    badTrials(end+1) = i-2;
+                    break;
+                elseif mod(i,3) ==1
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i+1;
+                    badTrials(end+1) = i+2;
+                    break;
+                elseif mod(i,3) ==2
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i-1;
+                    badTrials(end+1) = i+1;
+                    break;
+                end
+                
             end
+            j= j+1;
         end
-        j= j+1;
+        i = i+1;
     end
-    i = i+1;
+   
+else
+    artifact_all = cat(1,artifact_jump, artifact_muscle);
+    i=1;
+    j=1;
+    while i <= length(trl_segmented)
+        j = 1;
+        while j <= length(artifact_all)
+            if trl_segmented(i,1) <= artifact_all(j,1) && artifact_all(j,1) <= trl_segmented(i,2)
+                if mod(i,2)==0
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i-1;  
+                    break;
+                else
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i+1;  
+                    break;
+                end
+            end
+            j= j+1;
+        end
+        i = i+1;
+    end
 end
-
-
+    
 badTrials= unique(badTrials);
 
 % remove trials from the trl definition
 trl_segmented(badTrials,:) = [];
-subjectInfo.removedTrials = subjectInfo.removedTrials + length(badTrials);
+
 
 
 % re-define to the segmented version of the data but now without bad trials
@@ -322,10 +352,9 @@ cfg.demean = 'yes';
 cfg.continuous = 'no'; % Setting this to yes forces ft_databrowser to represent our segmented data as one continuous signal
 ft_databrowser(cfg, data_tms_segmented);
 
-
 % resample into new data structure
 cfg                      = [];
-cfg.resamplefs           = 500; % Frequency to resample to
+cfg.resamplefs           = 1000; % Frequency to resample to
 cfg.demean               = 'yes';
 data_tms_segmented_resampled = ft_resampledata(cfg, data_tms_segmented);
 
@@ -336,14 +365,13 @@ close all
 cfg = [];
 cfg.demean = 'yes'; 
 cfg.method = 'fastica';        % FieldTrip supports multiple ways to perform ICA, 'fastica' is one of them.
-cfg.fastica.numOfIC = length(data_tms_segmented.label);
+cfg.fastica.numOfIC = length(data_tms_segmented.label)-5;
 cfg.fastica.approach = 'symm'; % All components will be estimated simultaneously.
 cfg.fastica.g = 'gauss'; 
 
 % might need to downsample here ****************
  
 comp_tms = ft_componentanalysis(cfg, data_tms_segmented_resampled);
-subjectInfo.numComponents = length(comp_tms.topo);
 
 % checkout the data
 
@@ -365,7 +393,6 @@ cfg.viewmode = 'component';
 cfg.layout    = 'easycap_J61';
 ft_databrowser(cfg, comp_tms);
 
-
  % frequency analysis
  
  
@@ -374,12 +401,10 @@ ft_databrowser(cfg, comp_tms);
  cfg.output          = 'pow'; % Output the powerspectrum
  cfg.method          = 'mtmconvol';
  cfg.taper           = 'hanning';
- cfg.foi             = 1:1:69; % Our frequencies of interest. Now: 1 to 50, in steps of 1.
- %cfg.t_ftimwin       = prestim+poststim/numel(cfg.foi).*ones(1,numel(cfg.foi));
- cfg.t_ftimwin       = 0.1*ones(1,numel(cfg.foi));
- cfg.toi             = -prestim:0.002:poststim-0.0002;
+ cfg.foi             = 1:3:69; % Our frequencies of interest. Now: 1 to 50, in steps of 1.
+ cfg.t_ftimwin       = 0.3.*ones(1,numel(cfg.foi));
+ cfg.toi             = 0:0.05:2;
  %cfg.toi             = 0:0.0002:0.8932;
- 
  
  
  freq = ft_freqanalysis(cfg, comp_tms);
@@ -392,12 +417,7 @@ ft_databrowser(cfg, comp_tms);
  
  cfg = [];
  cfg.xlim =  'maxmin' % Specify the time range to plot
- m = freq.powspctrm;
- m(isnan(m)) = [];
- yh = mean(mean(mean(prctile(m, 98))))
- yl = mean(mean(mean(prctile(m, 2))))
-
- cfg.zlim =   [yl yh];
+ cfg.zlim =   [-25 25];
  cfg.layout = 'ordered';
  cfg.showlabels = 'yes';
  cfg.interactve = 'yes';
@@ -419,7 +439,7 @@ cfg          = [];
 cfg.demean   = 'no'; % This has to be explicitly stated as the default is to demean.
 cfg.unmixing = comp_tms.unmixing; % Supply the matrix necessay to 'unmix' the channel-series data into components
 cfg.topolabel = comp_tms.topolabel; % Supply the original channel label information
-subjectInfo.componentUnmixing = comp_tms.unmixing;
+ 
 comp_tms          = ft_componentanalysis(cfg, data_tms_segmented);
 
 
@@ -430,9 +450,8 @@ badComps = input(prompt)
 cfg            = [];
 cfg.component  = badComps;  
 cfg.demean     = 'no';
-
+ 
 data_tms_clean_segmented = ft_rejectcomponent(cfg, comp_tms);
-subjectInfo.badComponents = badComps;
 
 % Interpolate data
 % Apply original structure to segmented data, gaps will be filled with nans
@@ -450,7 +469,6 @@ cfg.method = 'pchip'; % Here you can specify any method that is supported by int
 cfg.prewindow = 0.01; % Window prior to segment to use data points for interpolation
 cfg.postwindow = 0.01; % Window after segment to use data points for interpolation
 data_tms_clean = ft_interpolatenan(cfg, data_tms_clean); % Clean data
-% data_tms_clean.time = -prestim:1/data_tms_clean.fsample:poststim-1/data_tms_clean.fsample;
 
 cfg = [];
 cfg.bpfilter = 'yes';
@@ -463,50 +481,20 @@ data_tms_clean = ft_preprocessing(cfg, data_tms_clean);
 % compute the TEP on the cleaned data
 cfg = [];
 cfg.preproc.demean = 'yes';
-cfg.preproc.baselinewindow = [-0.5 -0.01];
-cfg.trials = find(data_tms_clean.trialinfo==1);
-data_tms_clean_avg1 = ft_timelockanalysis(cfg, data_tms_clean);
-data_tms_clean_avg1.prestim = prestim;
-data_tms_clean_avg1.poststim = poststim;
-data_tms_clean_avg1.subjectInfo = subjectInfo;
-
-cfg = [];
-cfg.preproc.demean = 'yes';
-cfg.preproc.baselinewindow = [-0.5 -0.01];
-cfg.trials = find(data_tms_clean.trialinfo==2);
-data_tms_clean_avg2 = ft_timelockanalysis(cfg, data_tms_clean);
-data_tms_clean_avg2.prestim = prestim;
-data_tms_clean_avg2.poststim = poststim;
-data_tms_clean_avg2.subjectInfo = subjectInfo;
-
-cfg = [];
-cfg.preproc.demean = 'yes';
-cfg.preproc.baselinewindow = [-0.5 -0.01];
-cfg.trials = find(data_tms_clean.trialinfo==3);
-data_tms_clean_avg3 = ft_timelockanalysis(cfg, data_tms_clean);
-data_tms_clean_avg3.prestim = prestim;
-data_tms_clean_avg3.poststim = poststim;
-data_tms_clean_avg3.subjectInfo = subjectInfo;
-
-cfg = [];
-cfg.preproc.demean = 'yes';
-cfg.preproc.baselinewindow = [-0.5 -0.01];
-cfg.trials = find(data_tms_clean.trialinfo==4);
-data_tms_clean_avg4 = ft_timelockanalysis(cfg, data_tms_clean);
-data_tms_clean_avg4.prestim = prestim;
-data_tms_clean_avg4.poststim = poststim;
-data_tms_clean_avg4.subjectInfo = subjectInfo;
+cfg.preproc.baselinewindow = [-0.05 -0.001];
+ 
+data_tms_clean_avg = ft_timelockanalysis(cfg, data_tms_clean);
 
 prompt = '\n \n What channel would you like to see? \n \n';
 channel = input(prompt);
 
 
 figure;
-plot(-prestim:1/data_tms_clean.fsample:poststim-1/data_tms_clean.fsample, data_tms_clean_avg1.avg(channel,:)); % Plot all data
+plot(data_tms_clean_avg.time, data_tms_clean_avg.avg(channel,:)); % Plot all data
     %xlim([0.5 2.5]); % Here we can specify the limits of what to plot on the x-axis
    % ylim([-23 15]); % Here we can specify the limits of what to plot on the y-axis
-    title(['Channel ' data_tms_avg1.label{channel}]);
+    title(['Channel ' data_tms_avg.label{channel}]);
     ylabel('Amplitude (uV)')
     xlabel('Time (s)');
-    %set(gca,'Xtick', -.5:0.1:1)
+    set(gca,'Xtick', .5:0.1:2.5)
     grid on

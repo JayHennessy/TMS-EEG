@@ -1,4 +1,4 @@
-function [  value ] = findpeak( data_type,dataset,type,channel,peak )
+function [  value  ] = findpeak_new( data_type,dataset,type,channel,peak )
 %UNTITLED Summary of this function goes here
 %   This function finds the max peak value of the EMG response
 %  [  value ] = findpeak(data_type, dataset, type,channel )
@@ -40,51 +40,16 @@ end
 elseif strcmp(data_type, 'EEG')
 
 %if ~isempty(findstr(varname(dataset),'single'))
- if type==1   
-    lim_min = 5000-50+peak*5;
-    lim_max = 5000+50+peak*5;
+
+    lim_min = 2500-25+peak*5;
+    lim_max = 2500+25+peak*5;
     if peak ==60
     value = max(dataset(channel,lim_min:lim_max));
     elseif peak ==100
     value = min(dataset(channel,lim_min:lim_max));
     end
-end
 
-%if ~isempty(findstr(varname(dataset),'lici'))
- if type==2   
-    lim_min = 5500-50+peak*5;
-    lim_max = 5500+50+peak*5;
-     if peak ==60
-    value = max(dataset(channel,lim_min:lim_max));
-    elseif peak ==100
-    value = min(dataset(channel,lim_min:lim_max));
-    end
-end
 
-%if ~isempty(findstr(varname(dataset),'icf'))
- if type ==3
-     lim_min = 5055-50+peak*5;
-    lim_max = 5055+50+peak*5;
-    if peak ==60
-    value = max(dataset(channel,lim_min:lim_max));
-    elseif peak ==100
-    value = min(dataset(channel,lim_min:lim_max));
-    end
-end
 
-%if ~isempty(findstr(varname(dataset),'custom'))
- if type ==4
-    lim_min = 5005-50+peak*5;
-    lim_max = 5005+50+peak*5;
-   if peak ==60
-    value = max(dataset(channel,lim_min:lim_max));
-    elseif peak ==100
-    value = min(dataset(channel,lim_min:lim_max));
-    end
-end
-
-else
-    error('need to specify the type of data (either EEG or EMG)');
-end
 end
 

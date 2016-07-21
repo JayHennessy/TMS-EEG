@@ -1,7 +1,7 @@
 addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507'
 addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507/utilities'
 %addpath '/Users/jay/Desktop/Work/EEG_tests/s13'   % make this which ever path leads to the data being processed
-fileName = 'jn_1501_s16_M1.eeg';
+fileName = '1501_s14_DLPFC.eeg';
 
 
 prestim = 0.5;  
@@ -79,44 +79,6 @@ while chans == 0
     prompt = '\n \n Are you pleased with the result?  [1 = y / 0 = n] \n \n ';
     chans = input(prompt);
     
-end
-
-% Interpolate missing channels if they are important
-if ~sum(ismember(data_tms_raw.label, 'C3')) && strcmp(subjectInfo.stimLoc, 'M1') % case for M1
-%     cfg = [];
-%   
-%     cfg.layout = 'easycap_J61';
-%     lay = ft_prepare_layout(cfg);
-% 
-%     cfg.method = 'distance';
-%     cfg.feedback = 'yes';
-%     cfg.channel = 'C3';
-%         
-%     neighbours = ft_prepare_neighbours(cfg, data_tms_raw)
-    neighbours(1).label = 'C3';
-    neighbours(1).neighblabel = {'C1','C5','FC3','CP3','CP5','CP1','FC5','FC1'};
-    cfg = [];
-    cfg.method = 'spline';
-    cfg.badchannel = {'C3'};
-    cfg.neighbours = neighbours;
-    
-    [data_tms_raw] = ft_channelrepair(cfg, data_tms_raw)
-    
-elseif ~sum(ismember(data_tms_raw.label, 'AF3')) && strcmp(subjectInfo.stimLoc, 'DLPFC') % case for DLPFC
-    cfg = [];
-    cfg.method = 'distance';
-    cfg.layout = 'easycap_J61';
-    cfg.channel = 'AF3';
-    
-    neighbours = ft_prepare_neighbours(cfg, data_tms_raw)
-    
-    cfg = [];
-    cfg.method = 'spline';
-    cfg.badchannel = {'AF3'};
-    cfg.neighbours = neighbours;
-    
-    [data_tms_raw] = ft_channelrepair(cfg, data_tms_raw)
-
 end
 
 subjectInfo.badChannels = badChannels;
@@ -269,39 +231,76 @@ trl_trimmed = data_tms_trimmed.cfg.trl;
 count =1;
 i =1;
 while i<=length(badTrialsHand)
-    
-    badTrials(count) = 2*badTrialsHand(i)-1;
-    badTrials(count+1) = 2*badTrialsHand(i);
-    count = count+2;
-    
+    if pulseType ==2
+        badTrials(count) = 3*badTrialsHand(i)-1;
+        badTrials(count+1) = 3*badTrialsHand(i);
+        badTrials(count+2) = 3*badTrialsHand(i)-2;
+        count = count+3;
+    else
+        badTrials(count) = 2*badTrialsHand(i)-1;
+        badTrials(count+1) = 2*badTrialsHand(i);
+        count = count+2;
+    end
     i= i+1;
 end
 
 % then identify the automatically picked trials
-
-artifact_all = cat(1,artifact_jump, artifact_muscle);
-i=1;
-j=1;
-while i <= length(trl_segmented)
-    j = 1;
-    while j <= length(artifact_all)
-        if trl_segmented(i,1) <= artifact_all(j,1) && artifact_all(j,1) <= trl_segmented(i,2)
-            if mod(i,2)==0
-                badTrials(end+1) = i;
-                badTrials(end+1) = i-1;
-                break;
-            else
-                badTrials(end+1) = i;
-                badTrials(end+1) = i+1;
-                break;
+if pulseType == 2
+   
+    artifact_all = cat(1,artifact_jump, artifact_muscle);
+    i=1;
+    j=1;
+    while i <= length(trl_segmented)
+        j = 1;
+        while j <= length(artifact_all)
+            if trl_segmented(i,1) <= artifact_all(j,1) && artifact_all(j,1) <= trl_segmented(i,2)
+                if mod(i,3)==0
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i-1;
+                    badTrials(end+1) = i-2;
+                    break;
+                elseif mod(i,3) ==1
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i+1;
+                    badTrials(end+1) = i+2;
+                    break;
+                elseif mod(i,3) ==2
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i-1;
+                    badTrials(end+1) = i+1;
+                    break;
+                end
+                
             end
+            j= j+1;
         end
-        j= j+1;
+        i = i+1;
     end
-    i = i+1;
+   
+else
+    artifact_all = cat(1,artifact_jump, artifact_muscle);
+    i=1;
+    j=1;
+    while i <= length(trl_segmented)
+        j = 1;
+        while j <= length(artifact_all)
+            if trl_segmented(i,1) <= artifact_all(j,1) && artifact_all(j,1) <= trl_segmented(i,2)
+                if mod(i,2)==0
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i-1;  
+                    break;
+                else
+                    badTrials(end+1) = i;
+                    badTrials(end+1) = i+1;  
+                    break;
+                end
+            end
+            j= j+1;
+        end
+        i = i+1;
+    end
 end
-
-
+    
 badTrials= unique(badTrials);
 
 % remove trials from the trl definition
