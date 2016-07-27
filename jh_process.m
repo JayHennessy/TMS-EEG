@@ -1,7 +1,8 @@
-addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507'
-addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507/utilities'
+% addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507'
+% addpath '/Users/jay/Documents/MATLAB/fieldtrip-20150507/utilities'
 %addpath '/Users/jay/Desktop/Work/EEG_tests/s13'   % make this which ever path leads to the data being processed
-fileName = 'jn_1501_s16_M1.eeg';
+addpath(genpath('/Users/jay/Desktop/Work/TMS-EEG'));
+fileName = '1501_s13_DLPFC.eeg';
 
 
 prestim = 0.5;  
@@ -9,7 +10,7 @@ poststim = 1;
 triggers = {'S  1' , 'S  2','S  3','S  4'};
 
 % record info about the subject
-if strfind(fileName, 'DLPFC')
+if ~isempty(strfind(fileName, 'DLPFC')) || ~isempty(strfind(fileName, 'dlpfc'))
     subjectInfo.stimLoc = 'DLPFC';
 elseif strfind(fileName, 'M1')
     subjectInfo.stimLoc = 'M1';
@@ -18,7 +19,7 @@ else
     subjectInfo.stimLoc = 'M1';
 end
 
-x = strfind(fileName, '_s')
+x = strfind(fileName, '_s');
 subjectInfo.No = fileName(x+2:x+3);
 
 
@@ -83,39 +84,68 @@ end
 
 % Interpolate missing channels if they are important
 if ~sum(ismember(data_tms_raw.label, 'C3')) && strcmp(subjectInfo.stimLoc, 'M1') % case for M1
-%     cfg = [];
-%   
-%     cfg.layout = 'easycap_J61';
-%     lay = ft_prepare_layout(cfg);
-% 
-%     cfg.method = 'distance';
-%     cfg.feedback = 'yes';
-%     cfg.channel = 'C3';
-%         
-%     neighbours = ft_prepare_neighbours(cfg, data_tms_raw)
-    neighbours(1).label = 'C3';
-    neighbours(1).neighblabel = {'C1','C5','FC3','CP3','CP5','CP1','FC5','FC1'};
+    
+    cfg = [];
+  
+    cfg.layout = 'easycap_J61';
+    lay = ft_prepare_layout(cfg);
+    cfg.layout = lay;
+    cfg.method = 'distance';
+    cfg.feedback = 'yes';
+    cfg.neighbourdist = 0.2;
+    %cfg.channel = 'C3';
+        
+    neighbours = ft_prepare_neighbours(cfg, data_tms_raw)
+
     cfg = [];
     cfg.method = 'spline';
-    cfg.badchannel = {'C3'};
+    cfg.badchannel ={'C3'};
     cfg.neighbours = neighbours;
+    cfg.layout = lay;
     
     [data_tms_raw] = ft_channelrepair(cfg, data_tms_raw)
     
 elseif ~sum(ismember(data_tms_raw.label, 'AF3')) && strcmp(subjectInfo.stimLoc, 'DLPFC') % case for DLPFC
     cfg = [];
-    cfg.method = 'distance';
+  
     cfg.layout = 'easycap_J61';
-    cfg.channel = 'AF3';
-    
+    lay = ft_prepare_layout(cfg);
+    cfg.layout = lay;
+    cfg.method = 'distance';
+    cfg.feedback = 'yes';
+    %cfg.channel = 'C3';
+        
     neighbours = ft_prepare_neighbours(cfg, data_tms_raw)
-    
+
     cfg = [];
     cfg.method = 'spline';
     cfg.badchannel = {'AF3'};
     cfg.neighbours = neighbours;
+    cfg.layout = lay;
     
     [data_tms_raw] = ft_channelrepair(cfg, data_tms_raw)
+    
+elseif ~sum(ismember(data_tms_raw.label, 'F3')) && strcmp(subjectInfo.stimLoc, 'DLPFC') % case for DLPFC
+    cfg = [];
+  
+    cfg.layout = 'easycap_J61';
+    lay = ft_prepare_layout(cfg);
+    cfg.layout = lay;
+    cfg.method = 'distance';
+    cfg.feedback = 'yes';
+    %cfg.channel = 'C3';
+        
+    neighbours = ft_prepare_neighbours(cfg, data_tms_raw)
+
+    cfg = [];
+    cfg.method = 'spline';
+    cfg.badchannel = {'F3'};
+    cfg.neighbours = neighbours;
+    cfg.layout = lay;
+    
+    [data_tms_raw] = ft_channelrepair(cfg, data_tms_raw)
+
+
 
 end
 
@@ -453,6 +483,8 @@ data_tms_clean = ft_interpolatenan(cfg, data_tms_clean); % Clean data
 % data_tms_clean.time = -prestim:1/data_tms_clean.fsample:poststim-1/data_tms_clean.fsample;
 
 cfg = [];
+cfg.demean = 'yes';
+cfg.detrend = 'yes';
 cfg.bpfilter = 'yes';
 cfg.dftfilter = 'yes';
 cfg.bpfreq = [0.3 80];
@@ -462,7 +494,7 @@ data_tms_clean = ft_preprocessing(cfg, data_tms_clean);
  
 % compute the TEP on the cleaned data
 cfg = [];
-cfg.preproc.demean = 'yes';
+%cfg.preproc.demean = 'yes';
 cfg.preproc.baselinewindow = [-0.5 -0.01];
 cfg.trials = find(data_tms_clean.trialinfo==1);
 data_tms_clean_avg1 = ft_timelockanalysis(cfg, data_tms_clean);
@@ -471,7 +503,7 @@ data_tms_clean_avg1.poststim = poststim;
 data_tms_clean_avg1.subjectInfo = subjectInfo;
 
 cfg = [];
-cfg.preproc.demean = 'yes';
+%cfg.preproc.demean = 'yes';
 cfg.preproc.baselinewindow = [-0.5 -0.01];
 cfg.trials = find(data_tms_clean.trialinfo==2);
 data_tms_clean_avg2 = ft_timelockanalysis(cfg, data_tms_clean);
@@ -480,7 +512,7 @@ data_tms_clean_avg2.poststim = poststim;
 data_tms_clean_avg2.subjectInfo = subjectInfo;
 
 cfg = [];
-cfg.preproc.demean = 'yes';
+%cfg.preproc.demean = 'yes';
 cfg.preproc.baselinewindow = [-0.5 -0.01];
 cfg.trials = find(data_tms_clean.trialinfo==3);
 data_tms_clean_avg3 = ft_timelockanalysis(cfg, data_tms_clean);
@@ -489,7 +521,7 @@ data_tms_clean_avg3.poststim = poststim;
 data_tms_clean_avg3.subjectInfo = subjectInfo;
 
 cfg = [];
-cfg.preproc.demean = 'yes';
+%cfg.preproc.demean = 'yes';
 cfg.preproc.baselinewindow = [-0.5 -0.01];
 cfg.trials = find(data_tms_clean.trialinfo==4);
 data_tms_clean_avg4 = ft_timelockanalysis(cfg, data_tms_clean);
@@ -500,13 +532,35 @@ data_tms_clean_avg4.subjectInfo = subjectInfo;
 prompt = '\n \n What channel would you like to see? \n \n';
 channel = input(prompt);
 
+channel = jh_getChannel(data_tms_clean_avg1,channel);
+
 
 figure;
-plot(-prestim:1/data_tms_clean.fsample:poststim-1/data_tms_clean.fsample, data_tms_clean_avg1.avg(channel,:)); % Plot all data
+plot(data_tms_clean_avg1.time, data_tms_clean_avg1.avg(channel,:)); % Plot all data
     %xlim([0.5 2.5]); % Here we can specify the limits of what to plot on the x-axis
    % ylim([-23 15]); % Here we can specify the limits of what to plot on the y-axis
-    title(['Channel ' data_tms_avg1.label{channel}]);
+    title(['Channel ' data_tms_clean_avg1.label{channel}]);
     ylabel('Amplitude (uV)')
     xlabel('Time (s)');
     %set(gca,'Xtick', -.5:0.1:1)
     grid on
+    
+    %save the averaged data
+if exist(strcat('processed_data_',subjectInfo.stimLoc)) == 7
+    cd(strcat('processed_data_',subjectInfo.stimLoc));
+    save('data_tms_clean_avg1');
+    save('data_tms_clean_avg2');
+    save('data_tms_clean_avg3');
+    save('data_tms_clean_avg4');
+
+else
+    mkdir(strcat('processed_data_',subjectInfo.stimLoc))
+    cd(strcat('processed_data_',subjectInfo.stimLoc));
+    save('data_tms_clean_avg1');
+    save('data_tms_clean_avg2');
+    save('data_tms_clean_avg3');
+    save('data_tms_clean_avg4');
+end
+
+
+ 
